@@ -166,41 +166,9 @@
 
 
 // 	function __init__() {
-// 		globalThis.elm = elm;
-// 		globalThis.q = q;
-// 		globalThis.qq = qq;
-// 		globalThis.DateNowHack = DateNowHack;
-// 		globalThis.paginate = paginate;
-// 		Promise.empty = empty;
-// 		Promise.frame = frame;
-// 		fetch.cached = cached;
-// 		fetch.doc = doc;
-// 		Array.map = map;
-// 		Object.defineValue = defineValue;
-// 		Object.defineGetter = defineGetter;
 // 		Object.map = function(o, mapper) {
 // 			return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, mapper(v, k, o)]));
 // 		}
-// 		Object.defineValue(Array.prototype, pmap);
-// 		Object.defineValue(Array.prototype, vsort);
-// 		Object.defineValue(Element.prototype, function q(sel) {
-// 			return this.querySelector(sel);
-// 		});
-// 		Object.defineValue(Element.prototype, function qq(sel) {
-// 			return [...this.querySelectorAll(sel)];
-// 		});
-// 		Object.defineValue(Element.prototype, function appendTo(sel) {
-// 			if (typeof sel == 'string') sel = q(sel);
-// 			sel.append(this);
-// 			return this;
-// 		});
-// 		Object.defineValue(HTMLDocument.prototype, function q(sel) {
-// 			return this.documentElement.q(sel);
-// 		});
-// 		Object.defineValue(HTMLDocument.prototype, function qq(sel) {
-// 			return this.documentElement.qq(sel);
-// 		});
-// 		Object.defineValue(Element.prototype, emit);
 // 		Object.defineGetter(Element.prototype, function data(){
 // 			let data = JSON.parse(this.dataset.data || '{}');
 // 			return new Proxy(data, {

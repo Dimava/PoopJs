@@ -1,0 +1,14 @@
+ {
+  "compilerOptions": {
+    "module": "none",
+    "target": "ESNext",
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "outDir": "./build",
+    "outFile":"./build/build.js",
+	"declaration": true,
+    "sourceRoot": "./src/",
+    "rootDir": "./src/",
+    "sourceMap": true
+  }
+}

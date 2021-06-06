@@ -1,10 +1,13 @@
 {
-  "name": "poopjs",
+  "name": "@dimava/poopjs",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/poop.js",
   "author": "Dimava",
   "license": "MIT",
   "devDependencies": {
     "typescript": "^4.2.4"
-  }
+  },
+  "description": "A shitcoding framework",
+  "repository": "https://github.com/Dimava/PoopJs.git",
+  "private": false
 }

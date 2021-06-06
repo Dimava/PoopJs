@@ -4,12 +4,9 @@
     "target": "ESNext",
     "removeComments": false,
     "preserveConstEnums": true,
-    "outDir": "./build",
-    "outFile":"./build/build.js",
+    "outFile":"./dist/poop.js",
 	"declaration": true,
     "rootDir": "./src/",
-    // "sourceRoot": "http://127.0.0.1:8887/projects/poopjs/src/",
-    // "sourceMap": true,
 	"inlineSourceMap": true,
 	"inlineSources": true,
   }

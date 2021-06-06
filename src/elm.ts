@@ -9,19 +9,19 @@ namespace PoopJs {
 			/#(?<id>[\w-]+)/,
 			/\.(?<class>[\w-]+)/,
 			/\[(?<attr1>[\w-]+)\]/,
-			/\[(?<attr2>[\w-]+=(?!['"])(?<val2>[^\]]*))\]/,
-			/\[(?<attr3>[\w-]+="(?<val3>([^"]|\\")*))")\]/,
-			/\[(?<attr4>[\w-]+="(?<val4>([^']|\\')*))")\]/,
+			/\[(?<attr2>[\w-]+)=(?!['"])(?<val2>[^\]]*)\]/,
+			/\[(?<attr3>[\w-]+)="(?<val3>(?:[^"]|\\")*)"\]/,
+			/\[(?<attr4>[\w-]+)="(?<val4>(?:[^']|\\')*)"\]/,
 		].map(e => e.source).join('|'), 'g');
 
 
 		/**
 		 * Creates an element matching provided selector, with provided children and listeners
 		 */
-		export function elm(selector: string, ...children: (Child | Listener)[]): HTMLElement;
+		export function elm(selector?: string, ...children: (Child | Listener)[]): HTMLElement;
 		export function elm(selector: `input${string}`, ...children: (Child | Listener)[]): HTMLInputElement;
 		export function elm(selector: `img${string}`, ...children: (Child | Listener)[]): HTMLImageElement;
-		export function elm(selector: string, ...children: (Child | Listener)[]): HTMLElement {
+		export function elm(selector: string = '', ...children: (Child | Listener)[]): HTMLElement {
 			if (selector.replaceAll(elmRegex, '') != '') {
 				throw new Error(`invalid selector: ${selector}`);
 			}
@@ -38,9 +38,9 @@ namespace PoopJs {
 				} else if (match.groups.attr2) {
 					element.setAttribute(match.groups.attr2, match.groups.val2);
 				} else if (match.groups.attr3) {
-					element.setAttribute(match.groups.attr2, match.groups.val2.replace(/\\"/g, '"'));
+					element.setAttribute(match.groups.attr3, match.groups.val3.replace(/\\"/g, '"'));
 				} else if (match.groups.attr4) {
-					element.setAttribute(match.groups.attr2, match.groups.val2.replace(/\\'/g, '\''));
+					element.setAttribute(match.groups.attr4, match.groups.val4.replace(/\\'/g, '\''));
 				}
 			}
 			for (let listener of children.filter(e => typeof e == 'function') as Listener[]) {

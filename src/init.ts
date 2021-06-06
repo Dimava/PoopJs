@@ -1,16 +1,19 @@
+/// <reference path="./Array.ts" />
+/// <reference path="./DateNowHack.ts" />
+/// <reference path="./Element.ts" />
 /// <reference path="./elm.ts" />
-/// <reference path="./element.ts" />
-/// <reference path="./Promise.ts" />
 /// <reference path="./fetch.ts" />
-/// <reference path="Object.ts" />
-/// <reference path="Array.ts" />
+/// <reference path="./Object.ts" />
+/// <reference path="./paginate.ts" />
+/// <reference path="./Promise.ts" />
+
+
 
 
 namespace PoopJs {
 
 	export function __init__(window: Window): "inited" | "already inited" {
-		if (!window) window = globalThis.window as unknown as Window;
-		if (Object.prototype.hasOwnProperty.call(window, '__init__')) return 'already inited';
+		if (!window) window = globalThis.window as Window;
 
 		window.elm = Elm.elm;
 		window.q = winq.q;
@@ -18,6 +21,7 @@ namespace PoopJs {
 		object.defineValue(Element.prototype, 'q', element.q);
 		object.defineValue(Element.prototype, 'qq', element.qq);
 		object.defineValue(Element.prototype, 'appendTo', element.appendTo);
+		object.defineValue(Element.prototype, 'emit', element.emit);
 		object.defineValue(Document.prototype, 'q', docq.q);
 		object.defineValue(Document.prototype, 'qq', docq.qq);
 
@@ -33,24 +37,17 @@ namespace PoopJs {
 
 		object.defineValue(Object, 'defineValue', object.defineValue);
 		object.defineValue(Object, 'defineGetter', object.defineGetter);
+		Object.defineValue(Object, 'map', object.map);
 
 		object.defineValue(Array, 'map', array.map);
 		object.defineValue(Array.prototype, 'pmap', array.pmap);
 		object.defineValue(Array.prototype, 'vsort', array.vsort);
 
+		window.paginate = PoopJs.paginate;
+		window.DateNowHack = PoopJs.DateNowHack.DateNowHack;
 
-
-
-		// globalThis.DateNowHack = DateNowHack;
-		// globalThis.paginate = paginate;
-
-
-		// Array.map = map;
-		// Object.map = function(o, mapper) {
-		// 	return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, mapper(v, k, o)]));
-		// }
-		// Object.defineValue(Array.prototype, pmap);
-		// Object.defineValue(Array.prototype, vsort);
+		object.defineValue(window, '__init__', 'already inited');
+		return 'inited';
 	}
 
 	object.defineGetter(window, '__init__', () => __init__(window));

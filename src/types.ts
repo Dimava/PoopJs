@@ -1,18 +1,19 @@
 namespace PoopJs {
-
+	export type ValueOf<T> = T[keyof T];
+	export type MappedObject<T, V> = {[P in keyof T]: V};
 }
 
 
 declare const __init__: "inited" | "already inited";
-elm: typeof PoopJs.Elm.elm;
+declare const elm: typeof PoopJs.Elm.elm;
 declare const q: typeof PoopJs.winq.q;
 declare const qq: typeof PoopJs.winq.qq;
-// @ts-ignore
-declare const fetch: {
-	(input: RequestInfo, init?: RequestInit): Promise<Response>;
-	cached: typeof PoopJs.Fetch.cached & { doc: typeof PoopJs.Fetch.cachedDoc };
-	doc: typeof PoopJs.Fetch.doc & { cached: typeof PoopJs.Fetch.cachedDoc };
-	cachedDoc: typeof PoopJs.Fetch.cachedDoc;
+declare const paginate: typeof PoopJs.paginate;
+declare const DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
+declare namespace fetch {
+	export const cached: typeof PoopJs.Fetch.cached & { doc: typeof PoopJs.Fetch.cachedDoc };
+	export const doc: typeof PoopJs.Fetch.doc & { cached: typeof PoopJs.Fetch.cachedDoc };
+	export const cachedDoc: typeof PoopJs.Fetch.cachedDoc;
 }
 
 interface Window {
@@ -20,6 +21,8 @@ interface Window {
 	elm: typeof PoopJs.Elm.elm;
 	q: typeof PoopJs.winq.q;
 	qq: typeof PoopJs.winq.qq;
+	paginate: typeof PoopJs.paginate;
+	DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
 	fetch: {
 		(input: RequestInfo, init?: RequestInit): Promise<Response>;
 		cached: typeof PoopJs.Fetch.cached & { doc: typeof PoopJs.Fetch.cachedDoc };
@@ -31,7 +34,8 @@ interface Window {
 interface Element {
 	q: typeof PoopJs.element.q;
 	qq: typeof PoopJs.element.qq;
-	appentTo: typeof PoopJs.element.appendTo;
+	appendTo: typeof PoopJs.element.appendTo;
+	emit: typeof PoopJs.element.emit;
 }
 
 interface Document {
@@ -42,6 +46,7 @@ interface Document {
 interface ObjectConstructor {
 	defineValue: typeof PoopJs.object.defineValue;
 	defineGetter: typeof PoopJs.object.defineGetter;
+	map: typeof PoopJs.object.map;
 }
 interface PromiseConstructor {
 	empty: typeof PoopJs.promise.empty;
@@ -55,4 +60,11 @@ interface Array<T> {
 }
 interface ArrayConstructor {
 	map: typeof PoopJs.array.map;
+}
+
+interface DateConstructor {
+	_now(): number;
+}
+interface Date {
+	_getTime(): number;
 }

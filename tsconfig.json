@@ -7,8 +7,10 @@
     "outDir": "./build",
     "outFile":"./build/build.js",
 	"declaration": true,
-    "sourceRoot": "./src/",
     "rootDir": "./src/",
-    "sourceMap": true
+    // "sourceRoot": "http://127.0.0.1:8887/projects/poopjs/src/",
+    // "sourceMap": true,
+	"inlineSourceMap": true,
+	"inlineSources": true,
   }
 }

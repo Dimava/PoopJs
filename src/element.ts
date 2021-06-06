@@ -41,7 +41,7 @@ namespace PoopJs {
 			return [...this.querySelectorAll(selector)];
 		}
 
-		export function emit(this: Element, type, detail) {
+		export function emit(this: Element, type: string, detail?: any) {
 			let event = new CustomEvent(type, {
 				bubbles: true,
 				detail,

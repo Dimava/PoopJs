@@ -1,11 +1,16 @@
 /// <reference path="./Array.ts" />
 /// <reference path="./DateNowHack.ts" />
-/// <reference path="./Element.ts" />
+/// <reference path="./element.ts" />
 /// <reference path="./elm.ts" />
+/// <reference path="./EntryFilter.ts" />
+/// <reference path="./EntryFilter2.ts" />
+/// <reference path="./etc.ts" />
 /// <reference path="./fetch.ts" />
 /// <reference path="./Object.ts" />
+/// <reference path="./observer.ts" />
 /// <reference path="./paginate.ts" />
 /// <reference path="./Promise.ts" />
+
 
 
 
@@ -16,41 +21,44 @@ namespace PoopJs {
 		if (!window) window = globalThis.window as Window;
 
 		window.elm = Elm.elm;
-		window.q = winq.q;
-		window.qq = winq.qq;
-		object.defineValue(Element.prototype, 'q', element.q);
-		object.defineValue(Element.prototype, 'qq', element.qq);
-		object.defineValue(Element.prototype, 'appendTo', element.appendTo);
-		object.defineValue(Element.prototype, 'emit', element.emit);
-		object.defineValue(Document.prototype, 'q', docq.q);
-		object.defineValue(Document.prototype, 'qq', docq.qq);
+		window.q = QuerySelector.WindowQ.q;
+		window.qq = QuerySelector.WindowQ.qq;
+		ObjectExtension.defineValue(Element.prototype, 'q', QuerySelector.ElementQ.q);
+		ObjectExtension.defineValue(Element.prototype, 'qq', QuerySelector.ElementQ.qq);
+		ObjectExtension.defineValue(Element.prototype, 'appendTo', ElementExtension.appendTo);
+		ObjectExtension.defineValue(Element.prototype, 'emit', ElementExtension.emit);
+		ObjectExtension.defineValue(Document.prototype, 'q', QuerySelector.DocumentQ.q);
+		ObjectExtension.defineValue(Document.prototype, 'qq', QuerySelector.DocumentQ.qq);
 
-		object.defineValue(Promise, 'empty', promise.empty);
-		object.defineValue(Promise, 'frame', promise.frame);
-		object.defineValue(Promise, 'raf', promise.frame);
+		ObjectExtension.defineValue(Promise, 'empty', PromiseExtension.empty);
+		ObjectExtension.defineValue(Promise, 'frame', PromiseExtension.frame);
+		ObjectExtension.defineValue(Promise, 'raf', PromiseExtension.frame);
 
-		window.fetch.cached = Fetch.cached as any;
-		window.fetch.doc = Fetch.doc as any;
-		window.fetch.cached.doc = Fetch.cachedDoc;
-		window.fetch.doc.cached = Fetch.cachedDoc;
-		window.fetch.cachedDoc = Fetch.cachedDoc;
+		window.fetch.cached = FetchExtension.cached as any;
+		window.fetch.doc = FetchExtension.doc as any;
+		window.fetch.json = FetchExtension.json as any;
+		window.fetch.cached.doc = FetchExtension.cachedDoc;
+		window.fetch.doc.cached = FetchExtension.cachedDoc;
+		window.fetch.cachedDoc = FetchExtension.cachedDoc;
+		window.fetch.json.cached = FetchExtension.cachedJson;
+		window.fetch.cached.json = FetchExtension.cachedJson;
 
-		object.defineValue(Object, 'defineValue', object.defineValue);
-		object.defineValue(Object, 'defineGetter', object.defineGetter);
-		Object.defineValue(Object, 'map', object.map);
+		ObjectExtension.defineValue(Object, 'defineValue', ObjectExtension.defineValue);
+		ObjectExtension.defineValue(Object, 'defineGetter', ObjectExtension.defineGetter);
+		ObjectExtension.defineValue(Object, 'map', ObjectExtension.map);
 
-		object.defineValue(Array, 'map', array.map);
-		object.defineValue(Array.prototype, 'pmap', array.pmap);
-		object.defineValue(Array.prototype, 'vsort', array.vsort);
+		ObjectExtension.defineValue(Array, 'map', ArrayExtension.map);
+		ObjectExtension.defineValue(Array.prototype, 'pmap', ArrayExtension.pmap);
+		ObjectExtension.defineValue(Array.prototype, 'vsort', ArrayExtension.vsort);
 
 		window.paginate = PoopJs.paginate;
 		window.DateNowHack = PoopJs.DateNowHack.DateNowHack;
 
-		object.defineValue(window, '__init__', 'already inited');
+		ObjectExtension.defineValue(window, '__init__', 'already inited');
 		return 'inited';
 	}
 
-	object.defineGetter(window, '__init__', () => __init__(window));
+	ObjectExtension.defineGetter(window, '__init__', () => __init__(window));
 
 	if (window.localStorage.__init__) {
 		window.__init__;

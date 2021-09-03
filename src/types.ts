@@ -6,60 +6,62 @@ namespace PoopJs {
 
 declare const __init__: "inited" | "already inited";
 declare const elm: typeof PoopJs.Elm.elm;
-declare const q: typeof PoopJs.winq.q;
-declare const qq: typeof PoopJs.winq.qq;
+declare const q: typeof PoopJs.QuerySelector.WindowQ.q;
+declare const qq: typeof PoopJs.QuerySelector.WindowQ.qq;
 declare const paginate: typeof PoopJs.paginate;
 declare const DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
 declare namespace fetch {
-	export const cached: typeof PoopJs.Fetch.cached & { doc: typeof PoopJs.Fetch.cachedDoc };
-	export const doc: typeof PoopJs.Fetch.doc & { cached: typeof PoopJs.Fetch.cachedDoc };
-	export const cachedDoc: typeof PoopJs.Fetch.cachedDoc;
+	export const cached: typeof PoopJs.FetchExtension.cached & { doc: typeof PoopJs.FetchExtension.cachedDoc, json: typeof PoopJs.FetchExtension.cachedJson };
+	export const doc: typeof PoopJs.FetchExtension.doc & { cached: typeof PoopJs.FetchExtension.cachedDoc };
+	export const cachedDoc: typeof PoopJs.FetchExtension.cachedDoc;
+	export const json: typeof PoopJs.FetchExtension.json & {cached:typeof PoopJs.FetchExtension.cachedJson };
 }
 
 interface Window {
 	readonly __init__: "inited" | "already inited";
 	elm: typeof PoopJs.Elm.elm;
-	q: typeof PoopJs.winq.q;
-	qq: typeof PoopJs.winq.qq;
+	q: typeof PoopJs.QuerySelector.WindowQ.q;
+	qq: typeof PoopJs.QuerySelector.WindowQ.qq;
 	paginate: typeof PoopJs.paginate;
 	DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
 	fetch: {
 		(input: RequestInfo, init?: RequestInit): Promise<Response>;
-		cached: typeof PoopJs.Fetch.cached & { doc: typeof PoopJs.Fetch.cachedDoc };
-		doc: typeof PoopJs.Fetch.doc & { cached: typeof PoopJs.Fetch.cachedDoc };
-		cachedDoc: typeof PoopJs.Fetch.cachedDoc;
+		cached: typeof PoopJs.FetchExtension.cached & { doc: typeof PoopJs.FetchExtension.cachedDoc, json: typeof PoopJs.FetchExtension.cachedJson };
+		doc: typeof PoopJs.FetchExtension.doc & { cached: typeof PoopJs.FetchExtension.cachedDoc };
+		cachedDoc: typeof PoopJs.FetchExtension.cachedDoc;
+		json: typeof PoopJs.FetchExtension.json & {cached:typeof PoopJs.FetchExtension.cachedJson };
 	}
 }
 
 interface Element {
-	q: typeof PoopJs.element.q;
-	qq: typeof PoopJs.element.qq;
-	appendTo: typeof PoopJs.element.appendTo;
-	emit: typeof PoopJs.element.emit;
+	q: typeof PoopJs.QuerySelector.ElementQ.q;
+	qq: typeof PoopJs.QuerySelector.ElementQ.qq;
+	appendTo: typeof PoopJs.ElementExtension.appendTo;
+	emit: typeof PoopJs.ElementExtension.emit;
 }
 
 interface Document {
-	q: typeof PoopJs.docq.q;
-	qq: typeof PoopJs.docq.qq;
+	q: typeof PoopJs.QuerySelector.DocumentQ.q;
+	qq: typeof PoopJs.QuerySelector.DocumentQ.qq;
 }
 
 interface ObjectConstructor {
-	defineValue: typeof PoopJs.object.defineValue;
-	defineGetter: typeof PoopJs.object.defineGetter;
-	map: typeof PoopJs.object.map;
+	defineValue: typeof PoopJs.ObjectExtension.defineValue;
+	defineGetter: typeof PoopJs.ObjectExtension.defineGetter;
+	map: typeof PoopJs.ObjectExtension.map;
 }
 interface PromiseConstructor {
-	empty: typeof PoopJs.promise.empty;
-	frame: typeof PoopJs.promise.frame;
-	raf: typeof PoopJs.promise.frame;
+	empty: typeof PoopJs.PromiseExtension.empty;
+	frame: typeof PoopJs.PromiseExtension.frame;
+	raf: typeof PoopJs.PromiseExtension.frame;
 }
 
 interface Array<T> {
-	vsort: typeof PoopJs.array.vsort;
-	pmap: typeof PoopJs.array.pmap;
+	vsort: typeof PoopJs.ArrayExtension.vsort;
+	pmap: typeof PoopJs.ArrayExtension.pmap;
 }
 interface ArrayConstructor {
-	map: typeof PoopJs.array.map;
+	map: typeof PoopJs.ArrayExtension.map;
 }
 
 interface DateConstructor {

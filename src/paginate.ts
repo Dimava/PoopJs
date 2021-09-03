@@ -2,15 +2,15 @@ namespace PoopJs {
 
 	type Link = Element | string | `http${string}`;
 
-	export class paginate {
-		static active = false;
-		static queued = 0;
-		static wip = false;
-		static doc: Document;
-		static init() {
-			if (paginate.active)
+	export namespace paginate {
+		export let active = false;
+		export let queued = 0;
+		export let wip = false;
+		export let doc: Document;
+		export function init() {
+			if (active)
 				return;
-			paginate.active = true;
+			active = true;
 
 			document.documentElement.addEventListener('mousedown', (event) => {
 				if (event.button != 1)
@@ -19,7 +19,7 @@ namespace PoopJs {
 				if (target.closest('a'))
 					return;
 				target.emit('paginationrequest', event);
-				this.paginationrequest(event);
+				paginationrequest(event);
 			});
 			document.documentElement.addEventListener('keydown', (event) => {
 				if (event.code != 'AltRight')
@@ -27,51 +27,84 @@ namespace PoopJs {
 				event.preventDefault();
 				let target = event.target as Element;
 				target.emit('paginationrequest', event);
-				this.paginationrequest(event);
+				paginationrequest(event);
 			});
 			document.documentElement.addEventListener('paginationend', (event) => {
-				paginate.wip = false;
-				if (paginate.queued) {
-					paginate.queued--;
-					paginate.run();
+				wip = false;
+				if (queued) {
+					queued--;
+					run();
 				}
 			});
 		}
-		static paginationrequest(event) {
+		export function paginationrequest(event) {
 			getSelection().removeAllRanges();
 			if (event.shiftKey || event.detail?.shiftKey
 				|| event.buttons == 1) {
-				paginate.queued += 9;
+				queued += 9;
 			}
-			if (paginate.wip) {
-				paginate.queued++;
+			if (wip) {
+				queued++;
 				return;
 			}
-			paginate.run();
+			run();
 		}
-		static run() {
-			paginate.wip = true;
+		export function run() {
+			wip = true;
 			document.documentElement.emit('paginationstart');
 		}
-		static onrun(condition, fn = condition) {
-			paginate.init();
+		export function onrun(condition, fn = condition) {
+			init();
 			if (!condition) return;
 			console.log('paginate registered:', fn);
 			document.addEventListener('paginationstart', fn);
 		}
-		static onchange(condition, fn = condition) {
-			paginate.init();
+
+
+		export function onRunO(data: { prefetch?: string | string[], click?: string, aDoc?: string, afterLast?: string | string[], replace?: string | string[] });
+		export function onRunO(condition: any, data: { prefetch?: string | string[], click?: string, aDoc?: string, afterLast?: string | string[], replace?: string | string[] });
+		export function onRunO(condition: any, data: { prefetch?: string | string[], click?: string, aDoc?: string, afterLast?: string | string[], replace?: string | string[] } = condition) {
+			if (!condition) return;
+
+			function makeArray(data: string | string[] | undefined): string[] {
+				return !data ? [] : Array.isArray(data) ? data : [data];
+			}
+			let fixedData = {
+				prefetch: makeArray(data.prefetch),
+				aDoc: data.aDoc,
+				click: makeArray(data.click),
+				afterLast: makeArray(data.afterLast),
+				replace: makeArray(data.replace),
+			};
+
+			fixedData.prefetch.map(e => prefetch(e));
+
+			onrun(async () => {
+				fixedData.click.map(e => q(e)?.click());
+				if (data.aDoc) {
+					await aDoc(data.aDoc);
+					fixedData.afterLast.map(e => afterLast(e));
+					fixedData.replace.map(e => replace(e));
+				}
+				end();
+			});
+			onend(() => {
+				fixedData.prefetch.map(prefetch);
+			});
+		}
+		export function onchange(condition, fn = condition) {
+			init();
 			if (!condition) return;
 			document.addEventListener('paginationchange', fn);
 		}
-		static end() {
+		export function end() {
 			document.documentElement.emit('paginationend');
 		}
-		static onend(condition, fn = condition) {
+		export function onend(condition, fn = condition) {
 			if (!condition) return;
 			document.addEventListener('paginationend', fn);
 		}
-		static toHref(link: Link) {
+		export function toHref(link: Link) {
 			if (typeof link == 'string') {
 				if (link.startsWith('http')) {
 					return link;
@@ -80,7 +113,7 @@ namespace PoopJs {
 			}
 			return (link as HTMLAnchorElement).href;
 		}
-		static toAnchor(link: Link): HTMLAnchorElement {
+		export function toAnchor(link: Link): HTMLAnchorElement {
 			if (typeof link == 'string') {
 				if (link.startsWith('http')) {
 					return elm(`a[href=${link}]`) as HTMLAnchorElement;
@@ -89,107 +122,171 @@ namespace PoopJs {
 			}
 			return link as HTMLAnchorElement;
 		}
-		static async aDoc(link: Link) {
-			let a = this.toAnchor(link);
+		export async function aDoc(link: Link) {
+			let a = toAnchor(link);
 			if (!a) throw new Error('not a link');
 			a.classList.add('paginate-spin');
 			let doc = await fetch.doc(a.href);
-			this.doc = doc;
+			paginate.doc = doc;
 			return doc;
 		}
-		static async aCachedDoc(link: Link) {
-			let a = this.toAnchor(link);
+		export async function aCachedDoc(link: Link) {
+			let a = toAnchor(link);
 			if (!a) throw new Error('not a link');
 			a.classList.add('paginate-spin');
 			let doc = await fetch.cached.doc(a.href);
 			a.classList.remove('paginate-spin');
-			this.doc = doc;
+			paginate.doc = doc;
 			return doc;
 		}
-		static appendChildren(doc, source, target = source) {
+		export function appendChildren(doc, source, target = source) {
 			if (typeof doc == 'string')
-				return this.appendChildren(this.doc, doc, source);
+				return appendChildren(paginate.doc, doc, source);
 			let children = [...doc.q(source).children];
 			q(target).append(...children);
 			document.documentElement.emit('paginationchange', children);
-			return this;
+			return paginate;
 		}
-		static afterLast(doc, source, target = source) {
+
+		export function afterLast(doc: Document, source: string, target?: string): typeof paginate;
+		export function afterLast(source: string, target?: string): typeof paginate;
+		export function afterLast(doc: Document | string, source: string, target = source): typeof paginate {
 			if (typeof doc == 'string')
-				return this.afterLast(this.doc, doc, source);
+				return afterLast(paginate.doc, doc, source);
 			let children = doc.qq(source);
 			let last = qq(target).pop();
 			last.after(...children);
-			document.documentElement.emit('paginationchange');
-			return this;
+			document.documentElement.emit('paginationchange', children);
+			return paginate;
 		}
-		static replace(doc: Document, source: string, target?: string): typeof paginate;
-		static replace(source: string, target?: string): typeof paginate;
-		static replace(doc: Document | string, source: string, target = source): typeof paginate {
+		export function replace(doc: Document, source: string, target?: string): typeof paginate;
+		export function replace(source: string, target?: string): typeof paginate;
+		export function replace(doc: Document | string, source: string, target = source): typeof paginate {
 			if (typeof doc == 'string')
-				return this.replace(this.doc, doc, source);
-			let child = doc.q(source)
-			q(target).replaceWith(child);
-			document.documentElement.emit('paginationchange', [child]);
-			return this;
+				return replace(paginate.doc, doc, source);
+			return replaceEach(doc, source, target); // !!! should check if this one is actually useless
+			// let child = doc.q(source)
+			// q(target).replaceWith(child);
+			// document.documentElement.emit('paginationchange', [child]);
+			// return paginate;
 		}
 
-		static prefetch(enabled: any, link: string | Element): typeof paginate;
-		static prefetch(link: string | Element): typeof paginate;
-		static prefetch(enabled: any, link?: string | Element) {
-			if (!link) {
-				link = enabled;
-			} else {
-				if (!enabled) return;
-			}
-			if (typeof link == 'string') {
-				if (!link.startsWith('http')) {
-					link = q(link);
+		export function replaceEach(doc: Document, source: string, target?: string): typeof paginate;
+		export function replaceEach(source: string, target?: string): typeof paginate;
+		export function replaceEach(doc: Document | string, source: string, target = source): typeof paginate {
+			if (typeof doc == 'string')
+				return replaceEach(paginate.doc, doc, source);
+			let children = doc.qq(source);
+			qq(target).map((e, i) => e.replaceWith(children[i]));
+			document.documentElement.emit('paginationchange', children);
+			return paginate;
+		}
+
+		export function prefetch(enabled: any, link: Link): boolean;
+		export function prefetch(link: Link): boolean;
+		export function prefetch(enabled: any, link: string | Element = enabled) {
+			if (!enabled) return false;
+
+			elm(`link[rel="prefetch"][href="${toHref(link)}"]`).appendTo('head');
+			return true;
+		}
+
+		export let imageScrollingActive = false;
+		export let imgSelector = 'img';
+
+		export function imageScrolling(selector?: string) {
+			if (imageScrollingActive) return;
+			if (selector) imgSelector = selector;
+			imageScrollingActive = true;
+			function onwheel(event: MouseEvent & { wheelDeltaY: number }) {
+				if (event.shiftKey || event.ctrlKey) return;
+				if (scrollWholeImage(-Math.sign(event.wheelDeltaY))) {
+					event.preventDefault();
 				}
 			}
-			if (typeof link != 'string') {
-				link = (link as HTMLAnchorElement).href;
-			}
-			elm(`link[rel="prefetch"][href="${link}"]`).appendTo('head');
-			return this;
+			document.addEventListener('mousewheel', onwheel, { passive: false });
+			return imageScrollingOff = () => {
+				imageScrollingActive = false;
+				document.removeEventListener('mousewheel', onwheel);
+			};
 		}
+		export let imageScrollingOff = () => { };
 
-		static imageScrollingActive = false;
-		static imageScrolling(selector?: string) {
-			if (this.imageScrollingActive) return;
-			if (selector) this.imgSelector = selector;
-			this.imageScrollingActive = true;
-			document.addEventListener(
-				'mousewheel',
-				(e: any) => {
-					this.scrollWholeImage(-Math.sign(e.wheelDeltaY));
-					e.preventDefault();
-				}, {
-				passive: false
-			}
-			);
-
-		}
-		static imgSelector = 'img';
-		static imgToWindowCenter(img) {
+		export function imgToWindowCenter(img: Element) {
 			let rect = img.getBoundingClientRect();
-			return rect.y + rect.height / 2 - innerHeight / 2;
+			return (rect.top + rect.bottom) / 2 - innerHeight / 2;
 		}
-		static getImages() {
-			return qq(this.imgSelector);
+
+		export function getAllImageInfo() {
+			let images = qq(imgSelector) as HTMLImageElement[];
+			let datas = images.map((img, index) => {
+				let rect = img.getBoundingClientRect();
+				return {
+					img, rect, index,
+					inScreen: rect.top >= -1 && rect.bottom <= innerHeight,
+					crossScreen: rect.bottom >= 1 && rect.top <= innerHeight - 1,
+					yToScreenCenter: (rect.top + rect.bottom) / 2 - innerHeight / 2,
+					isInCenter: Math.abs((rect.top + rect.bottom) / 2 - innerHeight / 2) < 3,
+					isScreenHeight: Math.abs(rect.height - innerHeight) < 3,
+				};
+			});
+			return datas;
 		}
-		static getCentralImg() {
-			return this.getImages().vsort(img => Math.abs(this.imgToWindowCenter(img)))[0];
+
+		export let scrollWholeImagePending = false;
+
+		export function getCentralImg() {
+			return getAllImageInfo().vsort(e => Math.abs(e.yToScreenCenter))[0]?.img;
 		}
-		static scrollWholeImage(dir = 1) {
-			let img = this.getCentralImg();
-			let images = this.getImages();
-			let index = images.indexOf(img);
-			let nextImg = images[index + (dir == 1 ? 1 : -1)];
-			let delta = this.imgToWindowCenter(nextImg);
-			scrollBy(0, delta);
+		export function scrollWholeImage(dir = 1) {
+			if (scrollWholeImagePending) return true;
+
+			dir = Math.sign(dir);
+			let datas = getAllImageInfo();
+			let central = datas.vsort(e => Math.abs(e.yToScreenCenter))[0];
+
+			function scrollToImage(data: typeof central | undefined): boolean {
+				if (!data) return false;
+				if (scrollY + data.yToScreenCenter <= 0 && scrollY <= 0) {
+					return false;
+				}
+				if (data.isScreenHeight) {
+					data.img.scrollIntoView();
+				} else {
+					scrollTo(scrollX, scrollY + data.yToScreenCenter);
+				}
+				scrollWholeImagePending = true;
+				Promise.raf(2).then(() => scrollWholeImagePending = false);
+				return true;
+			}
+
+			// if no images, don't scroll;
+			if (!central) return false;
+
+			// if current image is outside view, don't scroll
+			if (!central.crossScreen) return false;
+
+			// if current image is in center, scroll to the next one
+			if (central.isInCenter) {
+				return scrollToImage(datas[datas.indexOf(central) + dir]);
+			}
+
+			// if to scroll to current image you have to scroll in opposide direction, scroll to next one
+			if (Math.sign(central.yToScreenCenter) != dir) {
+				return scrollToImage(datas[datas.indexOf(central) + dir]);
+			}
+
+			// if current image is first/last, don't scroll over 25vh to it
+			if (dir == 1 && central.index == 0 && central.yToScreenCenter > innerHeight / 2) {
+				return false;
+			}
+			if (dir == -1 && central.index == datas.length - 1 && central.yToScreenCenter < -innerHeight / 2) {
+				return false;
+			}
+
+			return scrollToImage(central);
 		}
-	};
+	}
 
 
 }

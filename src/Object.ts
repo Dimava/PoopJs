@@ -1,6 +1,6 @@
 namespace PoopJs {
 
-	export namespace object {
+	export namespace ObjectExtension {
 
 		export function defineValue<T>(o: T, p: keyof T, value: any): T;
 		export function defineValue<T>(o: T, fn: Function): T;

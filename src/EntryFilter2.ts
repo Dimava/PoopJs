@@ -1,17 +1,16 @@
 namespace PoopJs {
 
-	export namespace EntryFiltererExtension {
-		type Wayness = false | true | 'dir';
-		type Mode = 'off' | 'on' | 'opposite';
+	export namespace EntryFiltererExtension2 {
+		export type Wayness = false | true | 'dir';
+		export type Mode = 'off' | 'on' | 'opposite';
 
-		type ParserFn<Data> = (el: HTMLElement, data: Partial<Data>) => Partial<Data> | PromiseLike<Partial<Data>> | void;
-		type FilterFn<Data> = (data: Data, el: HTMLElement) => boolean | number;
-		type SorterFn<Data> = (data: Data, el: HTMLElement) => number;
-		type ModifierFn<Data> = (data: Data, el: HTMLElement, mode: Mode, oldMode: Mode | null) => void;
-		type FilterWIFn<Data, V> = ((data: Data, el: HTMLElement, ...values: V[]) => boolean | number);
+		export type ParserFn<Data> = (el: HTMLElement, data: Partial<Data>) => Partial<Data> | PromiseLike<Partial<Data>> | void;
+		export type FilterFn<Data> = (data: Data, el: HTMLElement) => boolean;
+		export type SorterFn<Data> = (data: Data, el: HTMLElement) => number;
+		export type ModifierFn<Data> = (data: Data, el: HTMLElement, mode: Mode, oldMode: Mode | null) => void;
 
 		export class FiltererItem<Data> {
-			id: string;
+			id: string = "";
 			name?: string;
 			description?: string;
 			threeWay: Wayness = false;
@@ -23,6 +22,7 @@ namespace PoopJs {
 
 			constructor(selector: string, data: Partial<FiltererItem<Data>>) {
 				Object.assign(this, data);
+
 				this.button = elm(selector,
 					(click: MouseEvent) => this.click(click),
 					(contextmenu: MouseEvent) => this.contextmenu(contextmenu),
@@ -107,37 +107,37 @@ namespace PoopJs {
 			}
 		}
 
-		export class FilterWithInput<Data, V extends number | string> extends Filter<Data> {
-			declare filter: FilterWIFn<Data, V>;
-			input: HTMLInputElement | string | number;
-			constructor(data: Partial<FilterWithInput<Data, V>>) {
-				super(data);
-				if (typeof this.input != 'object') {
-					if (typeof this.input == 'number') {
-						this.input = `input[type=number][value=${this.input}]`;
-					}
-					if (!this.input.startsWith('input')) {
-						if (!this.input.startsWith('[')) this.input = `[type=text][value="${this.input.replaceAll('"', '\\"')}"]`;
-						if (!this.input.startsWith('input')) this.input = `input${this.input}`;
-					}
-					this.input = elm<HTMLInputElement>(this.input);
-				}
-				this.input.onchange = this.input.onkeyup = this.input.onkeydown = this.input.onkeypress = () => this.parent.requestUpdate();
-				this.button.append(this.input);
-			}
-			convert: (e: HTMLInputElement) => V
-				= (e: HTMLInputElement) => e.type == 'number' ? +e.value as V : e.value as V;
+		// export class FilterWithInput<Data, V extends number | string> extends Filter<Data> {
+		// 	declare filter: FilterWIFn<Data, V>;
+		// 	input: HTMLInputElement | string | number;
+		// 	constructor(data: Partial<FilterWithInput<Data, V>>) {
+		// 		super(data);
+		// 		if (typeof this.input != 'object') {
+		// 			if (typeof this.input == 'number') {
+		// 				this.input = `input[type=number][value=${this.input}]`;
+		// 			}
+		// 			if (!this.input.startsWith('input')) {
+		// 				if (!this.input.startsWith('[')) this.input = `[type=text][value="${this.input.replaceAll('"', '\\"')}"]`;
+		// 				if (!this.input.startsWith('input')) this.input = `input${this.input}`;
+		// 			}
+		// 			this.input = elm<HTMLInputElement>(this.input);
+		// 		}
+		// 		this.input.onchange = this.input.onkeyup = this.input.onkeydown = this.input.onkeypress = () => this.parent.requestUpdate();
+		// 		this.button.append(this.input);
+		// 	}
+		// 	convert: (e: HTMLInputElement) => V
+		// 		= (e: HTMLInputElement) => e.type == 'number' ? +e.value as V : e.value as V;
 
-			/** returns if item should be visible */
-			apply(data: Data, el: HTMLElement): boolean {
-				if (this.mode == 'off') return true;
-				let inputValue = this.convert(this.input as HTMLInputElement);
-				let value = this.filter(data, el, inputValue);
-				let result = typeof value == "number" ? value > 0 : value;
-				if (this.mode == 'on') return result;
-				if (this.mode == 'opposite') return !result;
-			}
-		}
+		// 	/** returns if item should be visible */
+		// 	apply(data: Data, el: HTMLElement): boolean {
+		// 		if (this.mode == 'off') return true;
+		// 		let inputValue = this.convert(this.input as HTMLInputElement);
+		// 		let value = this.filter(data, el, inputValue);
+		// 		let result = typeof value == "number" ? value > 0 : value;
+		// 		if (this.mode == 'on') return result;
+		// 		if (this.mode == 'opposite') return !result;
+		// 	}
+		// }
 
 		export class Sorter<Data> extends FiltererItem<Data> {
 			sorter: SorterFn<Data>;
@@ -271,10 +271,10 @@ namespace PoopJs {
 				data.filter ??= filter;
 				return this.addItem(id, data, this.filters, data => new Filter(data));
 			}
-			addFilterWithInput<V extends string | number>(id: string, filter: FilterWIFn<Data, V>, data: Partial<FilterWithInput<Data, V>> & { input?: V } = {}) {
-				data.filter ??= filter;
-				return this.addItem(id, data, this.filters, data => new FilterWithInput(data));
-			}
+			// addFilterWithInput<V extends string | number>(id: string, filter: FilterWIFn<Data, V>, data: Partial<FilterWithInput<Data, V>> & { input?: V } = {}) {
+			// 	data.filter ??= filter;
+			// 	return this.addItem(id, data, this.filters, data => new FilterWithInput(data));
+			// }
 			sorters: Sorter<Data>[] = [];
 			addSorter(id: string, sorter: SorterFn<Data>, data: Partial<Sorter<Data>> = {}) {
 				data.sorter = sorter;
@@ -443,5 +443,5 @@ namespace PoopJs {
 		}
 	}
 
-	export let EntryFilterer = EntryFiltererExtension.EntryFilterer;
+	export let EF2 = EntryFiltererExtension2.EntryFilterer;
 }

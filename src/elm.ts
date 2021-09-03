@@ -1,8 +1,9 @@
 namespace PoopJs {
 
 	export namespace Elm {
-		type Child = any;
-		type Listener = (event: Event) => any;
+		type Child = Node | string | number | boolean;
+		type SomeEvent = Event & MouseEvent & KeyboardEvent & { target: HTMLElement };
+		type Listener = (event: SomeEvent) => any;
 
 		const elmRegex = new RegExp([
 			/^(?<tag>[\w-]+)/,
@@ -14,13 +15,14 @@ namespace PoopJs {
 			/\[(?<attr4>[\w-]+)="(?<val4>(?:[^']|\\')*)"\]/,
 		].map(e => e.source).join('|'), 'g');
 
-
+		
+		export function elm<K extends keyof HTMLElementTagNameMap>(selector: K, ...children: (Child | Listener)[]): HTMLElementTagNameMap[K];
+		export function elm<E extends Element = HTMLElement>(selector?: string, ...children: (Child | Listener)[]): E;
+		export function elm<K extends keyof HTMLElementTagNameMap>(selector: string, ...children: (Child | Listener)[]): HTMLElementTagNameMap[K];
+		export function elm(): HTMLDivElement;
 		/**
 		 * Creates an element matching provided selector, with provided children and listeners
 		 */
-		export function elm(selector?: string, ...children: (Child | Listener)[]): HTMLElement;
-		export function elm(selector: `input${string}`, ...children: (Child | Listener)[]): HTMLInputElement;
-		export function elm(selector: `img${string}`, ...children: (Child | Listener)[]): HTMLImageElement;
 		export function elm(selector: string = '', ...children: (Child | Listener)[]): HTMLElement {
 			if (selector.replaceAll(elmRegex, '') != '') {
 				throw new Error(`invalid selector: ${selector}`);
@@ -53,7 +55,7 @@ namespace PoopJs {
 					element.addEventListener(name, listener);
 				}
 			}
-			element.append(...children.filter(e => typeof e != 'function'));
+			element.append(...children.filter(e => typeof e != 'function') as (Node | string)[]);
 			return element;
 		}
 	}

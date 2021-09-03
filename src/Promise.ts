@@ -1,6 +1,6 @@
 namespace PoopJs {
 
-	export namespace promise {
+	export namespace PromiseExtension {
 		type UnwrappedPromise<T> = Promise<T> & {
 			resolve: (value: T | PromiseLike<T>) => void;
 			reject: (reason?: any) => void;

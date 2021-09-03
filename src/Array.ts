@@ -1,13 +1,13 @@
 namespace PoopJs {
 
-	export namespace array {
+	export namespace ArrayExtension {
 
 
 		export async function pmap<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => Promise<V> | V, threads = 5): Promise<V[]> {
 			if (!(threads > 0)) throw new Error();
 			let tasks: [T, number, T[]][] = this.map((e, i, a) => [e, i, a]);
 			let results = Array<V>(tasks.length);
-			let anyResolved = promise.empty();
+			let anyResolved = PromiseExtension.empty();
 			let freeThreads = threads;
 			async function runTask(task: [T, number, T[]]): Promise<V> {
 				try {
@@ -21,7 +21,7 @@ namespace PoopJs {
 				results[task[1]] = await runTask(task);
 				freeThreads++;
 				let oldAnyResolved = anyResolved;
-				anyResolved = promise.empty();
+				anyResolved = PromiseExtension.empty();
 				oldAnyResolved.r(undefined);
 			}
 			for (let task of tasks) {

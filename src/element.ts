@@ -72,3 +72,18 @@ namespace PoopJs {
 	}
 
 }
+
+
+	// Object.defineGetter(Element.prototype, function data(){
+	// 	let data = JSON.parse(this.dataset.data || '{}');
+	// 	return new Proxy(data, {
+	// 		get: (target, name) => {
+	// 			if (name == 'data') return data;
+	// 			return data[name];
+	// 		},
+	// 		set: (target, name, value) => {
+	// 			data[name] = value;
+	// 			this.dataset.data = JSON.stringify(data);
+	// 		},
+	// 	});
+	// });

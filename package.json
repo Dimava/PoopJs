@@ -1,6 +1,6 @@
 {
   "name": "@dimava/poopjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/poop.js",
   "author": "Dimava",
   "license": "MIT",
@@ -9,5 +9,8 @@
   },
   "description": "A shitcoding framework",
   "repository": "https://github.com/Dimava/PoopJs.git",
-  "private": false
+  "private": false,
+  "scripts": {
+	  "start": "yarn tsc --watch"
+  }
 }

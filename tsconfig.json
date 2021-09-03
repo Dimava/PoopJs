@@ -1,13 +1,16 @@
- {
-  "compilerOptions": {
-    "module": "none",
-    "target": "ESNext",
-    "removeComments": false,
-    "preserveConstEnums": true,
-    "outFile":"./dist/poop.js",
-	"declaration": true,
-    "rootDir": "./src/",
-	"inlineSourceMap": true,
-	"inlineSources": true,
-  }
+{
+	"include": [
+		"src/**/*",
+	],
+	"compilerOptions": {
+		"module": "none",
+		"target": "ESNext",
+		"removeComments": false,
+		"preserveConstEnums": true,
+		"outFile": "./dist/poop.js",
+		"declaration": true,
+		"rootDir": "./src/",
+		"inlineSourceMap": true,
+		"inlineSources": true,
+	}
 }

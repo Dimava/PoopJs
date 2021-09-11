@@ -2,7 +2,7 @@ namespace PoopJs {
 
 	export namespace ObjectExtension {
 
-		export function defineValue<T>(o: T, p: keyof T, value: any): T;
+		export function defineValue<T, K extends keyof T>(o: T, p: K, value: T[K]): T;
 		export function defineValue<T>(o: T, fn: Function): T;
 		export function defineValue<T>(o: T, p: keyof T | string | Function, value?: any): T {
 			if (typeof p == 'function') {
@@ -17,7 +17,7 @@ namespace PoopJs {
 			return o;
 		}
 
-		export function defineGetter<T>(o: T, p: keyof T, get: () => ValueOf<T>): T;
+		export function defineGetter<T, K extends keyof T>(o: T, p: K, get: () => T[K]): T;
 		export function defineGetter<T>(o: T, get: Function): T;
 		export function defineGetter<T>(o: T, p: string | keyof T | Function, get?: any): T {
 			if (typeof p == 'function') {
@@ -31,9 +31,9 @@ namespace PoopJs {
 			return o;
 		}
 
-		export function map<T, V>(o: T, mapper: (v: ValueOf<T>, k: keyof T, o: T) => V): MappedObject<T,V> {
+		export function map<T, V>(o: T, mapper: (v: ValueOf<T>, k: keyof T, o: T) => V): MappedObject<T, V> {
 			let entries = Object.entries(o) as [keyof T, ValueOf<T>][];
-			return Object.fromEntries(entries.map(([k,v]) => [k, mapper(v, k, o)])) as MappedObject<T,V>;
+			return Object.fromEntries(entries.map(([k, v]) => [k, mapper(v, k, o)])) as MappedObject<T, V>;
 		}
 	}
 

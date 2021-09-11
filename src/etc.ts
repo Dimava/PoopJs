@@ -12,7 +12,7 @@ namespace PoopJs {
 		}
 
 		export async function fullscreen(on?: boolean) {
-			let central = paginate.imageScrollingActive && paginate.getCentralImg();
+			let central = ImageScrollingExtension.imageScrollingActive && ImageScrollingExtension.getCentralImg();
 			if (!document.fullscreenElement) {
 				if (on == false) return;
 				await document.documentElement.requestFullscreen();

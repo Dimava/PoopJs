@@ -2,13 +2,13 @@
 /// <reference path="./DateNowHack.ts" />
 /// <reference path="./element.ts" />
 /// <reference path="./elm.ts" />
-/// <reference path="./EntryFilter.ts" />
-/// <reference path="./EntryFilter2.ts" />
+/// <reference path="./Filterer/EntityFilterer.ts" />
 /// <reference path="./etc.ts" />
 /// <reference path="./fetch.ts" />
 /// <reference path="./Object.ts" />
 /// <reference path="./observer.ts" />
-/// <reference path="./paginate.ts" />
+/// <reference path="./Paginate/Pagination.ts" />
+/// <reference path="./Paginate/ImageScrolling.ts" />
 /// <reference path="./Promise.ts" />
 
 
@@ -21,7 +21,7 @@ namespace PoopJs {
 		if (!window) window = globalThis.window as Window;
 
 		window.elm = Elm.elm;
-		window.q = QuerySelector.WindowQ.q;
+		window.q = Object.assign(QuerySelector.WindowQ.q, { orElm: PoopJs.Elm.qOrElm });
 		window.qq = QuerySelector.WindowQ.qq;
 		ObjectExtension.defineValue(Element.prototype, 'q', QuerySelector.ElementQ.q);
 		ObjectExtension.defineValue(Element.prototype, 'qq', QuerySelector.ElementQ.qq);
@@ -42,16 +42,19 @@ namespace PoopJs {
 		window.fetch.cachedDoc = FetchExtension.cachedDoc;
 		window.fetch.json.cached = FetchExtension.cachedJson;
 		window.fetch.cached.json = FetchExtension.cachedJson;
+		ObjectExtension.defineValue(Response.prototype, 'cachedAt', 0);
+		ObjectExtension.defineValue(Document.prototype, 'cachedAt', 0);
 
 		ObjectExtension.defineValue(Object, 'defineValue', ObjectExtension.defineValue);
 		ObjectExtension.defineValue(Object, 'defineGetter', ObjectExtension.defineGetter);
-		ObjectExtension.defineValue(Object, 'map', ObjectExtension.map);
+		// ObjectExtension.defineValue(Object, 'map', ObjectExtension.map);
 
 		ObjectExtension.defineValue(Array, 'map', ArrayExtension.map);
 		ObjectExtension.defineValue(Array.prototype, 'pmap', ArrayExtension.pmap);
 		ObjectExtension.defineValue(Array.prototype, 'vsort', ArrayExtension.vsort);
 
-		window.paginate = PoopJs.paginate;
+		window.paginate = PoopJs.paginate as any;
+		window.imageScrolling = PoopJs.ImageScrollingExtension;
 		window.DateNowHack = PoopJs.DateNowHack.DateNowHack;
 
 		ObjectExtension.defineValue(window, '__init__', 'already inited');

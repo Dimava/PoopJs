@@ -4,15 +4,15 @@ namespace PoopJs {
 
 		export namespace WindowQ {
 			export function q<K extends keyof HTMLElementTagNameMap>(selector: K): HTMLElementTagNameMap[K];
-			export function q<E extends Element = HTMLElement>(selector: string): E;
-			export function q<K extends keyof HTMLElementTagNameMap>(selector: string): HTMLElementTagNameMap[K];
+			export function q<E extends Element = HTMLElement>(selector: selector): E;
+			export function q<K extends keyof HTMLElementTagNameMap>(selector: selector): HTMLElementTagNameMap[K];
 			export function q(selector: string) {
 				return document.querySelector(selector);
 			}
 
 			export function qq<K extends keyof HTMLElementTagNameMap>(selector: K): (HTMLElementTagNameMap[K])[];
-			export function qq<E extends Element = HTMLElement>(selector: string): E[];
-			export function qq<K extends keyof HTMLElementTagNameMap>(selector: string): (HTMLElementTagNameMap[K])[];
+			export function qq<E extends Element = HTMLElement>(selector: selector): E[];
+			export function qq<K extends keyof HTMLElementTagNameMap>(selector: selector): (HTMLElementTagNameMap[K])[];
 			export function qq(selector: string) {
 				return [...document.querySelectorAll(selector)];
 			}
@@ -20,15 +20,15 @@ namespace PoopJs {
 
 		export namespace DocumentQ {
 			export function q<K extends keyof HTMLElementTagNameMap>(this: Document, selector: K): HTMLElementTagNameMap[K];
-			export function q<E extends Element = HTMLElement>(this: Document, selector: string): E;
-			export function q<K extends keyof HTMLElementTagNameMap>(this: Document, selector: string): HTMLElementTagNameMap[K];
+			export function q<E extends Element = HTMLElement>(this: Document, selector: selector): E;
+			export function q<K extends keyof HTMLElementTagNameMap>(this: Document, selector: selector): HTMLElementTagNameMap[K];
 			export function q(this: Document, selector: string) {
 				return this.documentElement.querySelector(selector);
 			}
 
 			export function qq<K extends keyof HTMLElementTagNameMap>(this: Document, selector: K): (HTMLElementTagNameMap[K])[];
-			export function qq<E extends Element = HTMLElement>(this: Document, selector: string): E[];
-			export function qq<K extends keyof HTMLElementTagNameMap>(this: Document, selector: string): (HTMLElementTagNameMap[K])[];
+			export function qq<E extends Element = HTMLElement>(this: Document, selector: selector): E[];
+			export function qq<K extends keyof HTMLElementTagNameMap>(this: Document, selector: selector): (HTMLElementTagNameMap[K])[];
 			export function qq(this: Document, selector: string) {
 				return [...this.documentElement.querySelectorAll(selector)];
 			}
@@ -36,15 +36,15 @@ namespace PoopJs {
 
 		export namespace ElementQ {
 			export function q<K extends keyof HTMLElementTagNameMap>(this: Element, selector: K): HTMLElementTagNameMap[K];
-			export function q<E extends Element = HTMLElement>(this: Element, selector: string): E;
-			export function q<K extends keyof HTMLElementTagNameMap>(this: Element, selector: string): HTMLElementTagNameMap[K];
+			export function q<E extends Element = HTMLElement>(this: Element, selector: selector): E;
+			export function q<K extends keyof HTMLElementTagNameMap>(this: Element, selector: selector): HTMLElementTagNameMap[K];
 			export function q(this: Element, selector: string) {
 				return this.querySelector(selector);
 			}
 
 			export function qq<K extends keyof HTMLElementTagNameMap>(this: Element, selector: K): (HTMLElementTagNameMap[K])[];
-			export function qq<E extends Element = HTMLElement>(this: Element, selector: string): E[];
-			export function qq<K extends keyof HTMLElementTagNameMap>(this: Element, selector: string): (HTMLElementTagNameMap[K])[];
+			export function qq<E extends Element = HTMLElement>(this: Element, selector: selector): E[];
+			export function qq<K extends keyof HTMLElementTagNameMap>(this: Element, selector: selector): (HTMLElementTagNameMap[K])[];
 			export function qq(this: Element, selector: string) {
 				return [...this.querySelectorAll(selector)];
 			}
@@ -52,7 +52,8 @@ namespace PoopJs {
 	}
 
 	export namespace ElementExtension {
-		export function emit(this: Element, type: string, detail?: any) {
+		export function emit<T extends CustomEvent<{ _event?: string }>>(this: Element, type: T['detail']['_event'], detail?: T['detail']);
+		export function emit<T>(this: Element, type: string, detail?: T) {
 			let event = new CustomEvent(type, {
 				bubbles: true,
 				detail,
@@ -60,9 +61,7 @@ namespace PoopJs {
 			this.dispatchEvent(event);
 		}
 
-		export function appendTo(this: Element, parent: Element);
-		export function appendTo(this: Element, selector: string);
-		export function appendTo(this: Element, parent: Element | string) {
+		export function appendTo<E extends Element>(this: E, parent: Element | selector): E {
 			if (typeof parent == 'string') {
 				parent = document.querySelector(parent);
 			}
@@ -72,18 +71,3 @@ namespace PoopJs {
 	}
 
 }
-
-
-	// Object.defineGetter(Element.prototype, function data(){
-	// 	let data = JSON.parse(this.dataset.data || '{}');
-	// 	return new Proxy(data, {
-	// 		get: (target, name) => {
-	// 			if (name == 'data') return data;
-	// 			return data[name];
-	// 		},
-	// 		set: (target, name, value) => {
-	// 			data[name] = value;
-	// 			this.dataset.data = JSON.stringify(data);
-	// 		},
-	// 	});
-	// });

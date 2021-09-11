@@ -12,7 +12,7 @@
 	"private": false,
 	"scripts": {
 		"compile": "yarn tsc",
-		"watch": "yarn tsc --watch",
+		"watch": "yarn tsc --watch"
 	},
 	"dependencies": {}
 }

@@ -55,7 +55,6 @@ namespace PoopJs {
 
 		window.paginate = PoopJs.paginate as any;
 		window.imageScrolling = PoopJs.ImageScrollingExtension;
-		window.DateNowHack = PoopJs.DateNowHack.DateNowHack;
 
 		ObjectExtension.defineValue(window, '__init__', 'already inited');
 		return 'inited';

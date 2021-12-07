@@ -39,6 +39,10 @@ namespace PoopJs {
 			filter: ValueFilterFn<Data, V>;
 			input: V;
 		}
+		export interface MatchFilterSource<Data> extends FiltererItemSource {
+			value?: (data: Data, el: HTMLElement) => string;
+			input?: string;
+		}
 		export interface SorterSource<Data, V> extends FiltererItemSource {
 			sorter: SorterFn<Data, V>;
 			comparator?: ((a: V, b: V) => number) | V;

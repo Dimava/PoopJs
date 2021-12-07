@@ -117,3 +117,5 @@ out
 
 # .d.ts files generated for tests
 test/types/*
+
+src/test

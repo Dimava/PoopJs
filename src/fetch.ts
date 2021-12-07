@@ -1,14 +1,23 @@
 namespace PoopJs {
 
 	export namespace FetchExtension {
+		export type RequestInitEx = RequestInit & { maxAge?: number };
 		export let defaults: RequestInit = { credentials: 'include' };
 
-		export async function cached(url: string, init: RequestInit = {}): Promise<Response> {
-			let cache = await caches.open('fetch');
+		export let cache: Cache = null;
+		async function openCache() {
+			if (cache) return cache;
+			cache = await caches.open('fetch');
+			return cache;
+		}
+
+		export async function cached(url: string, init: RequestInitEx = {}): Promise<Response> {
+			let cache = await openCache();
 			let response = await cache.match(url);
 			if (response) {
 				response.cachedAt = +response.headers.get('cached-at') || 0;
-				return response;
+				if (init.maxAge == null || Date.now() - response.cachedAt < init.maxAge)
+					return response;
 			}
 			response = await fetch(url, { ...defaults, ...init });
 			if (response.ok) {
@@ -24,7 +33,7 @@ namespace PoopJs {
 			return response;
 		}
 
-		export async function cachedDoc(url: string, init: RequestInit = {}): Promise<Document> {
+		export async function cachedDoc(url: string, init: RequestInitEx = {}): Promise<Document> {
 			let response = await cached(url, init);
 			let text = await response.text();
 			let parser = new DOMParser();
@@ -36,7 +45,7 @@ namespace PoopJs {
 			return doc;
 		}
 
-		export async function cachedJson(url: string, init: RequestInit = {}): Promise<unknown> {
+		export async function cachedJson(url: string, init: RequestInitEx = {}): Promise<unknown> {
 			let response = await cached(url, init);
 			let json = await response.json();
 			if (!('cached' in json)) {
@@ -61,7 +70,13 @@ namespace PoopJs {
 		}
 
 		export async function clearCache() {
+			cache = null;
 			return caches.delete('fetch');
+		}
+
+		export async function uncache(url: string) {
+			let cache = await openCache();
+			return cache.delete(url);
 		}
 	}
 

@@ -14,7 +14,6 @@ declare const q: typeof PoopJs.QuerySelector.WindowQ.q & { orElm: typeof PoopJs.
 declare const qq: typeof PoopJs.QuerySelector.WindowQ.qq;
 declare const paginate: typeof PoopJs.paginate;
 declare const imageScrolling: typeof PoopJs.ImageScrollingExtension;
-declare const DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
 declare namespace fetch {
 	export const cached: typeof PoopJs.FetchExtension.cached & { doc: typeof PoopJs.FetchExtension.cachedDoc, json: typeof PoopJs.FetchExtension.cachedJson };
 	export const doc: typeof PoopJs.FetchExtension.doc & { cached: typeof PoopJs.FetchExtension.cachedDoc };
@@ -29,7 +28,6 @@ interface Window {
 	qq: typeof PoopJs.QuerySelector.WindowQ.qq;
 	paginate: typeof PoopJs.paginate;
 	imageScrolling: typeof PoopJs.ImageScrollingExtension;
-	DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
 	fetch: {
 		(input: RequestInfo, init?: RequestInit): Promise<Response>;
 		cached: typeof PoopJs.FetchExtension.cached & { doc: typeof PoopJs.FetchExtension.cachedDoc, json: typeof PoopJs.FetchExtension.cachedJson };

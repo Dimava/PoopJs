@@ -2,13 +2,23 @@ declare namespace PoopJs {
     namespace ArrayExtension {
         function pmap<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => Promise<V> | V, threads?: number): Promise<V[]>;
         function map<T = number>(this: ArrayConstructor, length: number, mapper?: (number: any) => T): T[];
-        function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter?: ((a: number, b: number, ae: T, be: T) => number) | -1): any;
-        function vsort<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => V, sorter: ((a: V, b: V, ae: T, be: T) => number) | -1): any;
+        function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter?: ((a: number, b: number, ae: T, be: T) => number) | -1): T[];
+        function vsort<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => V, sorter: ((a: V, b: V, ae: T, be: T) => number) | -1): T[];
     }
 }
 declare namespace PoopJs {
     namespace DateNowHack {
-        function DateNowHack(n?: number): void;
+        let speedMultiplier: number;
+        let deltaOffset: number;
+        let startRealtime: number;
+        let startTime: number;
+        function toFakeTime(time: number): number;
+        let bracketSpeeds: number[];
+        function speedhack(speed: number): void;
+        function timejump(seconds: number): void;
+        function switchSpeedhack(dir: number): boolean;
+        function bindBrackets(mode?: string): void;
+        let activated: boolean;
     }
 }
 declare namespace PoopJs {
@@ -117,13 +127,18 @@ declare namespace PoopJs {
 }
 declare namespace PoopJs {
     namespace FetchExtension {
+        type RequestInitEx = RequestInit & {
+            maxAge?: number;
+        };
         let defaults: RequestInit;
-        function cached(url: string, init?: RequestInit): Promise<Response>;
-        function cachedDoc(url: string, init?: RequestInit): Promise<Document>;
-        function cachedJson(url: string, init?: RequestInit): Promise<unknown>;
+        let cache: Cache;
+        function cached(url: string, init?: RequestInitEx): Promise<Response>;
+        function cachedDoc(url: string, init?: RequestInitEx): Promise<Document>;
+        function cachedJson(url: string, init?: RequestInitEx): Promise<unknown>;
         function doc(url: string): Promise<Document>;
         function json(url: string, init?: RequestInit): Promise<unknown>;
         function clearCache(): Promise<boolean>;
+        function uncache(url: string): Promise<boolean>;
     }
 }
 declare namespace PoopJs {
@@ -142,6 +157,7 @@ declare namespace PoopJs {
             entries: HTMLElement[];
             entryDatas: MapType<HTMLElement, Data>;
             getData(el: HTMLElement): Data;
+            getData(): Data[];
             updatePending: boolean;
             reparsePending: boolean;
             requestUpdate(reparse?: boolean): void;
@@ -158,11 +174,14 @@ declare namespace PoopJs {
             addFilter(id: string, filter: FilterFn<Data>, data?: FilterPartial<Data>): Filter<Data>;
             addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V>, data: ValueFilterPartial<Data, V>): ValueFilter<Data, V>;
             addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V>, data: V): any;
+            addMFilter(id: string, value: (data: Data, el: HTMLElement) => string, data: MatchFilterSource<Data>): MatchFilter<Data>;
+            addTagFilter(id: string, data: TagFilterSource<Data>): TagFilter<Data>;
             addSorter<V extends number | string>(id: string, sorter: SorterFn<Data, V>, data?: SorterPartialSource<Data, V>): Sorter<Data, V>;
             addModifier(id: string, modifier: ModifierFn<Data>, data?: ModifierPartial<Data>): Modifier<Data>;
             addPrefix(id: string, prefix: PrefixerFn<Data>, data?: PrefixerPartial<Data>): Prefixer<Data>;
             filterEntries(): void;
             orderedEntries: HTMLElement[];
+            orderMode: 'css' | 'swap';
             sortEntries(): void;
             modifyEntries(): void;
             moveToTop(item: ISorter<Data> | IModifier<Data>): void;
@@ -217,6 +236,7 @@ declare namespace PoopJs {
             static _inited: boolean;
             static removeDefaultRunBindings: () => void;
             static addDefaultRunBindings(): void;
+            static instances: Paginate[];
             init(): void;
             onPaginationRequest(event: PRequestEvent): void;
             onPaginationEnd(event: PEndEvent): void;
@@ -245,6 +265,15 @@ declare namespace PoopJs {
                 start?: () => void;
                 end?: () => void;
             }): Paginate;
+            rawData: any;
+            data: {
+                condition: () => boolean;
+                prefetch: any[];
+                doc: selector[];
+                click: selector[];
+                after: selector[];
+                replace: selector[];
+            };
             staticCall(data: {
                 condition?: selector | (() => boolean);
                 prefetch?: selector | selector[];
@@ -283,6 +312,7 @@ declare namespace PoopJs {
         let imageScrollingActive: boolean;
         let imgSelector: string;
         function imageScrolling(selector?: string): () => void;
+        function bindArrows(): void;
         let imageScrollingOff: () => void;
         function imgToWindowCenter(img: Element): number;
         function getAllImageInfo(): {
@@ -296,7 +326,7 @@ declare namespace PoopJs {
             isScreenHeight: boolean;
         }[];
         let scrollWholeImagePending: boolean;
-        function getCentralImg(): any;
+        function getCentralImg(): HTMLImageElement;
         function scrollWholeImage(dir?: number): boolean;
     }
 }
@@ -324,7 +354,6 @@ declare const q: typeof PoopJs.QuerySelector.WindowQ.q & {
 declare const qq: typeof PoopJs.QuerySelector.WindowQ.qq;
 declare const paginate: typeof PoopJs.paginate;
 declare const imageScrolling: typeof PoopJs.ImageScrollingExtension;
-declare const DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
 declare namespace fetch {
     const cached: typeof PoopJs.FetchExtension.cached & {
         doc: typeof PoopJs.FetchExtension.cachedDoc;
@@ -347,7 +376,6 @@ interface Window {
     qq: typeof PoopJs.QuerySelector.WindowQ.qq;
     paginate: typeof PoopJs.paginate;
     imageScrolling: typeof PoopJs.ImageScrollingExtension;
-    DateNowHack: typeof PoopJs.DateNowHack.DateNowHack;
     fetch: {
         (input: RequestInfo, init?: RequestInit): Promise<Response>;
         cached: typeof PoopJs.FetchExtension.cached & {
@@ -433,13 +461,13 @@ declare namespace PoopJs {
 }
 declare namespace PoopJs {
     namespace EntryFiltererExtension {
-        class Filter<Data> extends FiltererItem<Data> implements IFilter<Data> {
+        export class Filter<Data> extends FiltererItem<Data> implements IFilter<Data> {
             filter: FilterFn<Data>;
             constructor(data: FilterSource<Data>);
             /** returns if item should be visible */
             apply(data: Data, el: HTMLElement): boolean;
         }
-        class ValueFilter<Data, V extends string | number> extends FiltererItem<Data> implements IFilter<Data> {
+        export class ValueFilter<Data, V extends string | number> extends FiltererItem<Data> implements IFilter<Data> {
             filter: ValueFilterFn<Data, V>;
             input: HTMLInputElement;
             lastValue: V;
@@ -449,6 +477,42 @@ declare namespace PoopJs {
             apply(data: Data, el: HTMLElement): boolean;
             getValue(): V;
         }
+        export class MatchFilter<Data> extends FiltererItem<Data> implements IFilter<Data> {
+            value: (data: Data, el: HTMLElement) => string;
+            input: HTMLInputElement;
+            lastValue: string;
+            matcher: (input: string) => boolean;
+            constructor(data: MatchFilterSource<Data>);
+            change(): void;
+            apply(data: Data, el: HTMLElement): boolean;
+            generateMatcher(source: string): ((input: string) => boolean);
+        }
+        type TagGetterFn<Data> = selector | ((data: Data, el: HTMLElement, mode: Mode) => (HTMLElement[] | string[]));
+        export interface TagFilterSource<Data> extends FiltererItemSource {
+            tags: TagGetterFn<Data>;
+            input?: string;
+            highightClass?: string;
+        }
+        type TagMatcher = {
+            positive: boolean;
+            matches: (s: string) => boolean;
+        };
+        export class TagFilter<Data> extends FiltererItem<Data> implements IFilter<Data> {
+            tags: TagGetterFn<Data>;
+            input: HTMLInputElement;
+            highightClass: string;
+            lastValue: string;
+            cachedMatcher: TagMatcher[];
+            constructor(data: TagFilterSource<Data>);
+            apply(data: Data, el: HTMLElement): boolean;
+            resetHighlight(tag: string | HTMLElement): void;
+            highlightTag(tag: string | HTMLElement, positive: boolean): void;
+            getTags(data: Data, el: HTMLElement): HTMLElement[] | string[];
+            getTagStrings(data: Data, el: HTMLElement): string[];
+            change(): void;
+            parseMatcher(matcher: string): TagMatcher[];
+        }
+        export {};
     }
 }
 declare namespace PoopJs {
@@ -523,6 +587,10 @@ declare namespace PoopJs {
         interface ValueFilterSource<Data, V> extends FiltererItemSource {
             filter: ValueFilterFn<Data, V>;
             input: V;
+        }
+        interface MatchFilterSource<Data> extends FiltererItemSource {
+            value?: (data: Data, el: HTMLElement) => string;
+            input?: string;
         }
         interface SorterSource<Data, V> extends FiltererItemSource {
             sorter: SorterFn<Data, V>;

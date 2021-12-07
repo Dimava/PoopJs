@@ -34,7 +34,11 @@ namespace PoopJs {
 
 			entries: HTMLElement[] = [];
 			entryDatas: MapType<HTMLElement, Data> = new MapType();
-			getData(el: HTMLElement) {
+
+			getData(el: HTMLElement): Data;
+			getData(): Data[];
+			getData(el?: HTMLElement): Data | Data[] {
+				if (!el) return this.entries.map(e => this.getData(e));
 				let data = this.entryDatas.get(el);
 				if (!data) {
 					data = this.parseEntry(el);
@@ -59,6 +63,9 @@ namespace PoopJs {
 				this.requestUpdate(true);
 			}
 			parseEntry(el: HTMLElement): Data {
+				el.parentElement.classList.add('ef-entry-container');
+				el.classList.add('ef-entry');
+
 				let data: Data = {} as Data;
 				for (let parser of this.parsers) {
 					let newData = parser(el, data);
@@ -103,6 +110,12 @@ namespace PoopJs {
 				}
 				return this.addItem(ValueFilter, this.filters, data, { id, filter });
 			}
+			addMFilter(id: string, value: (data: Data, el: HTMLElement) => string, data: MatchFilterSource<Data>) {
+				return this.addItem(MatchFilter, this.filters, data, { id, value });
+			}
+			addTagFilter(id: string, data: TagFilterSource<Data>) {
+				return this.addItem(TagFilter, this.filters, data, { id });
+			}
 			addSorter<V extends number | string>(id: string, sorter: SorterFn<Data, V>, data: SorterPartialSource<Data, V> = {}): Sorter<Data, V> {
 				return this.addItem(Sorter, this.sorters, data, { id, sorter });
 			}
@@ -125,24 +138,42 @@ namespace PoopJs {
 			}
 
 			orderedEntries: HTMLElement[] = [];
+			orderMode: 'css' | 'swap' = 'css';
 			sortEntries() {
-				if (this.entries.length == 0) return;
+				if (this.entries.length <= 1) return;
 				if (this.orderedEntries.length == 0) this.orderedEntries = this.entries;
+				if (this.sorters.length == 0) return;
+
 				let entries = this.entries;
 				let pairs: [Data, HTMLElement][] = entries.map(e => [this.getData(e), e]);
+				let allOff = true;
 				for (let sorter of this.sorters) {
 					if (sorter.mode != 'off') {
 						pairs = sorter.sort(pairs);
+						allOff = false;
 					}
 				}
 				entries = pairs.map(e => e[1]);
-				if (entries.every((e, i) => e == this.orderedEntries[i])) {
-					return;
+				if (this.orderMode == 'swap') {
+					if (!entries.every((e, i) => e == this.orderedEntries[i])) {
+						let br = elm(`${entries[0]?.tagName}.ef-before-sort[hidden]`);
+						this.orderedEntries[0].before(br);
+						br.after(...entries);
+						br.remove();
+					}
+				} else {
+					entries.map((e, i) => {
+						if (allOff) {
+							e.classList.remove('ef-reorder');
+							e.parentElement.classList.remove('ef-reorder-container');
+						} else {
+							// use `display:flex` container and `order:var(--ef-order)` for children 
+							e.classList.add('ef-reorder');
+							e.style.setProperty('--ef-order', i + '');
+							e.parentElement.classList.remove('ef-reorder-container');
+						}
+					});
 				}
-				let br = elm(`${entries[0]?.tagName}.ef-before-sort[hidden]`);
-				this.orderedEntries[0].before(br);
-				br.after(...entries);
-				br.remove();
 				this.orderedEntries = entries;
 			}
 
@@ -177,7 +208,11 @@ namespace PoopJs {
 				if (!this.container.closest('body')) {
 					this.container.appendTo('body');
 				}
-				this.entries = typeof this.entrySelector == 'function' ? this.entrySelector() : qq(this.entrySelector);
+				let entries = typeof this.entrySelector == 'function' ? this.entrySelector() : qq(this.entrySelector);
+				if (this.entries.length != entries.length || this.entries) {
+					// TODO: sort entries in initial order
+				}
+				this.entries = entries;
 				this.filterEntries();
 				this.sortEntries();
 				this.modifyEntries();
@@ -264,11 +299,14 @@ namespace PoopJs {
 				this.parsers.splice(0, 999);
 				this.filters.splice(0, 999).map(e => e.remove());
 				this.sorters.splice(0, 999).map(e => e.remove());
+				this.modifiers.splice(0, 999).map(e => e.remove());
 				this.enable();
 			}
 
 			get _datas() {
-				return this.entries.map(e => this.getData(e));
+				return this.entries
+					.filter(e => !e.classList.contains('ef-filtered-out'))
+					.map(e => this.getData(e));
 			}
 
 		}

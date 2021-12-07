@@ -60,7 +60,7 @@ namespace PoopJs {
 					document.removeEventListener('keydown', onkeydown);
 				}
 			}
-
+			static instances: Paginate[] = [];
 
 			// listeners
 			init() {
@@ -70,6 +70,7 @@ namespace PoopJs {
 				if (this._inited) return;
 				document.addEventListener<PRequestEvent>('paginationrequest', this.onPaginationRequest.bind(this));
 				document.addEventListener<PEndEvent>('paginationend', this.onPaginationEnd.bind(this));
+				Paginate.instances.push(this);
 			}
 			onPaginationRequest(event: PRequestEvent) {
 				if (this.canConsumeRequest()) {
@@ -223,6 +224,15 @@ namespace PoopJs {
 				return p;
 			}
 
+			rawData: any;
+			data: {
+				condition: () => boolean;
+				prefetch: any[];
+				doc: selector[];
+				click: selector[];
+				after: selector[];
+				replace: selector[];
+			};
 			staticCall(data: {
 				condition?: selector | (() => boolean),
 				prefetch?: selector | selector[],
@@ -250,33 +260,34 @@ namespace PoopJs {
 				function findOne(a: selector[]) {
 					return a.find(s => document.q(s));
 				}
-				let fixedData = {
+				this.rawData = data;
+				this.data = {
 					condition: toCondition(data.condition),
-					prefetch: toArray(data.prefetch)
+					prefetch: toArray<selector>(data.prefetch)
 						.flatMap(e => toArray(data[e] ?? e)),
-					doc: toArray(data.doc),
-					click: toArray(data.click),
-					after: toArray(data.after),
-					replace: toArray(data.replace),
+					doc: toArray<selector>(data.doc),
+					click: toArray<selector>(data.click),
+					after: toArray<selector>(data.after),
+					replace: toArray<selector>(data.replace),
 				};
 				this.condition = () => {
-					if (!fixedData.condition()) return false;
-					if (!canFind(fixedData.doc)) return false;
-					if (!canFind(fixedData.click)) return false;
+					if (!this.data.condition()) return false;
+					if (!canFind(this.data.doc)) return false;
+					if (!canFind(this.data.click)) return false;
 					return true;
 				};
 				this.init();
-				if (fixedData.condition()) {
-					fixedData.prefetch.map(s => this.prefetch(s));
+				if (this.data.condition()) {
+					this.data.prefetch.map(s => this.prefetch(s));
 				}
 				this.onrun = async () => {
 					// if (!fixedData.condition()) return;
 					await data.start?.();
-					fixedData.click.map(e => document.q(e)?.click());
-					let doc = findOne(fixedData.doc);
+					this.data.click.map(e => document.q(e)?.click());
+					let doc = findOne(this.data.doc);
 					if (doc) await this.fetchDocument(doc);
-					fixedData.after.map(s => this.after(s));
-					fixedData.replace.map(s => this.replace(s));
+					this.data.after.map(s => this.after(s));
+					this.data.replace.map(s => this.replace(s));
 					await data.end?.();
 				}
 			}

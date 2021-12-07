@@ -38,9 +38,9 @@ namespace PoopJs {
 			return this(length).fill(0).map((e, i, a) => mapper(i));
 		}
 
-		export function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter?: ((a: number, b: number, ae: T, be: T) => number) | -1);
-		export function vsort<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => V, sorter: ((a: V, b: V, ae: T, be: T) => number) | -1);
-		export function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter: ((a: number, b: number, ae: T, be: T) => number) | -1 = (a, b) => a - b) {
+		export function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter?: ((a: number, b: number, ae: T, be: T) => number) | -1): T[];
+		export function vsort<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => V, sorter: ((a: V, b: V, ae: T, be: T) => number) | -1): T[];
+		export function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter: ((a: number, b: number, ae: T, be: T) => number) | -1 = (a, b) => a - b): T[] {
 			let theSorter = typeof sorter == 'function' ? sorter : (a, b) => b - a;
 			return this
 				.map((e, i, a) => ({ e, v: mapper(e, i, a) }))

@@ -20,6 +20,16 @@ namespace PoopJs {
 				document.removeEventListener('mousewheel', onwheel);
 			};
 		}
+		export function bindArrows() {
+			addEventListener('keydown', event => {
+				if (event.code == 'ArrowLeft') {
+					scrollWholeImage(-1);
+				}
+				if (event.code == 'ArrowRight') {
+					scrollWholeImage(1);
+				}
+			})
+		}
 		export let imageScrollingOff = () => { };
 
 		export function imgToWindowCenter(img: Element) {
@@ -39,7 +49,7 @@ namespace PoopJs {
 					isInCenter: Math.abs((rect.top + rect.bottom) / 2 - innerHeight / 2) < 3,
 					isScreenHeight: Math.abs(rect.height - innerHeight) < 3,
 				};
-			});
+			}).filter(e => e.rect?.width || e.rect?.width);
 			return datas;
 		}
 
@@ -48,12 +58,21 @@ namespace PoopJs {
 		export function getCentralImg() {
 			return getAllImageInfo().vsort(e => Math.abs(e.yToScreenCenter))[0]?.img;
 		}
-		export function scrollWholeImage(dir = 1) {
+		export function scrollWholeImage(dir = 1): boolean {
 			if (scrollWholeImagePending) return true;
+			// if (dir == 0) throw new Error('scrolling in no direction!');
+			if (!dir) return false;
 
 			dir = Math.sign(dir);
-			let datas = getAllImageInfo();
+			let datas = getAllImageInfo().vsort(e => e.yToScreenCenter);
 			let central = datas.vsort(e => Math.abs(e.yToScreenCenter))[0];
+			let nextCentralIndex = datas.indexOf(central);
+			while (
+				datas[nextCentralIndex + dir] &&
+				Math.abs(datas[nextCentralIndex + dir].yToScreenCenter - central.yToScreenCenter) < 10
+			) nextCentralIndex += dir;
+			central = datas[nextCentralIndex];
+			let next = datas[nextCentralIndex + dir];
 
 			function scrollToImage(data: typeof central | undefined): boolean {
 				if (!data) return false;
@@ -78,12 +97,12 @@ namespace PoopJs {
 
 			// if current image is in center, scroll to the next one
 			if (central.isInCenter) {
-				return scrollToImage(datas[datas.indexOf(central) + dir]);
+				return scrollToImage(next);
 			}
 
 			// if to scroll to current image you have to scroll in opposide direction, scroll to next one
 			if (Math.sign(central.yToScreenCenter) != dir) {
-				return scrollToImage(datas[datas.indexOf(central) + dir]);
+				return scrollToImage(next);
 			}
 
 			// if current image is first/last, don't scroll over 25vh to it

@@ -42,6 +42,7 @@ namespace PoopJs {
 		window.fetch.cachedDoc = FetchExtension.cachedDoc;
 		window.fetch.json.cached = FetchExtension.cachedJson;
 		window.fetch.cached.json = FetchExtension.cachedJson;
+		window.fetch.isCached = FetchExtension.isCached;
 		ObjectExtension.defineValue(Response.prototype, 'cachedAt', 0);
 		ObjectExtension.defineValue(Document.prototype, 'cachedAt', 0);
 

@@ -2,6 +2,7 @@ namespace PoopJs {
 
 	export namespace FetchExtension {
 		export type RequestInitEx = RequestInit & { maxAge?: number };
+		export type RequestInitExJson = RequestInit & { maxAge?: number, indexedDb?: boolean };
 		export let defaults: RequestInit = { credentials: 'include' };
 
 		export let cache: Cache = null;
@@ -11,12 +12,17 @@ namespace PoopJs {
 			return cache;
 		}
 
+		function isStale(cachedAt: number, maxAge?: number) {
+			if (maxAge == null) return false;
+			return Date.now() - cachedAt >= maxAge;
+		}
+
 		export async function cached(url: string, init: RequestInitEx = {}): Promise<Response> {
 			let cache = await openCache();
 			let response = await cache.match(url);
 			if (response) {
 				response.cachedAt = +response.headers.get('cached-at') || 0;
-				if (init.maxAge == null || Date.now() - response.cachedAt < init.maxAge)
+				if (!isStale(response.cachedAt, init.maxAge))
 					return response;
 			}
 			response = await fetch(url, { ...defaults, ...init });
@@ -45,16 +51,20 @@ namespace PoopJs {
 			return doc;
 		}
 
-		export async function cachedJson(url: string, init: RequestInitEx = {}): Promise<unknown> {
-			let response = await cached(url, init);
-			let json = await response.json();
-			if (!('cached' in json)) {
-				ObjectExtension.defineValue(json, 'cached', response.cachedAt);
-			}
-			return json;
+
+		export async function doc(url: string, init: RequestInitEx = {}): Promise<Document> {
+			let response = await fetch(url, { ...defaults, ...init });
+			let text = await response.text();
+			let parser = new DOMParser();
+			let doc = parser.parseFromString(text, 'text/html');
+			let base = doc.createElement('base');
+			base.href = url;
+			doc.head.append(base);
+			doc.cachedAt = response.cachedAt;
+			return doc;
 		}
 
-		export async function doc(url: string): Promise<Document> {
+		export async function xmlDoc(url: string): Promise<Document> {
 			let p = PromiseExtension.empty();
 			let oReq = new XMLHttpRequest();
 			oReq.onload = p.r;
@@ -78,6 +88,98 @@ namespace PoopJs {
 			let cache = await openCache();
 			return cache.delete(url);
 		}
+
+		export async function isCached(url: string, options: { maxAge?: number, indexedDb?: boolean | 'only' } = {}): Promise<boolean | 'idb'> {
+			if (options.indexedDb) {
+				let dbJson = await idbGet(url);
+				if (dbJson) {
+					return isStale(dbJson.cachedAt, options.maxAge) ? false : 'idb';
+				}
+				if (options.indexedDb == 'only') return false;
+			}
+			let cache = await openCache();
+			let response = await cache.match(url);
+			if (!response) return false;
+			if (typeof options?.maxAge == 'number') {
+				let cachedAt = +response.headers.get('cached-at') || 0;
+				if (isStale(response.cachedAt, options.maxAge)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+
+
+		export async function cachedJson(url: string, init: RequestInitExJson = {}): Promise<unknown> {
+			if (init.indexedDb) {
+				let dbJson = await idbGet(url);
+				if (dbJson) {
+					if (!isStale(dbJson.cachedAt, init.maxAge)) {
+						ObjectExtension.defineValue(dbJson.data as any, 'cached', dbJson.cachedAt);
+						return dbJson.data;
+					}
+				}
+			}
+			let response = await cached(url, init);
+			let json = await response.json();
+			if (!('cached' in json)) {
+				ObjectExtension.defineValue(json, 'cached', response.cachedAt);
+			}
+			if (init.indexedDb) {
+				idbPut(url, json, response.cachedAt);
+			}
+			return json;
+		}
+
+
+		let _idbInstancePromise: IDBDatabase | Promise<IDBDatabase> = null;
+		let idbInstance: IDBDatabase = null;
+
+		async function openIdb(): Promise<IDBDatabase> {
+			if (idbInstance) return idbInstance;
+			if (await _idbInstancePromise) {
+				return idbInstance;
+			}
+			let irq = indexedDB.open('fetch');
+			irq.onupgradeneeded = event => {
+				let db = irq.result;
+				let store = db.createObjectStore('fetch', { keyPath: 'url' });
+			}
+			_idbInstancePromise = new Promise((r, j) => {
+				irq.onsuccess = r;
+				irq.onerror = j;
+			}).then(() => irq.result, () => null);
+			idbInstance = _idbInstancePromise = await _idbInstancePromise;
+			if (!idbInstance) throw new Error('Failed to open indexedDB');
+			return idbInstance;
+		}
+
+		export async function idbClear() {
+			throw new Error('TODO')
+		}
+
+
+		async function idbGet(url: string): Promise<{ url: string, data: unknown, cachedAt: number } | undefined> {
+			let db = await openIdb();
+			let t = db.transaction(['fetch'], 'readonly');
+			let rq = t.objectStore('fetch').get(url);
+			return new Promise(r => {
+				rq.onsuccess = () => r(rq.result);
+				rq.onerror = () => r(undefined);
+			});
+		}
+
+		async function idbPut(url: string, data: unknown, cachedAt?: number): Promise<IDBValidKey | undefined> {
+			let db = await openIdb();
+			let t = db.transaction(['fetch'], 'readwrite');
+			let rq = t.objectStore('fetch').put({ url, data, cachedAt: cachedAt ?? +new Date() });
+			return new Promise(r => {
+				rq.onsuccess = () => r(rq.result);
+				rq.onerror = () => r(undefined);
+			});
+		}
+
 	}
 
 }

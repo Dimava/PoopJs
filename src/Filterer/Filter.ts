@@ -222,5 +222,41 @@ namespace PoopJs {
 
 		}
 
+		export class PaginationInfoFilter<Data> extends FiltererItem<Data> implements IFilter<Data> {
+			constructor(data: FiltererItemSource) {
+				super(data);
+				this.init();
+			}
+			apply() {
+				return true;
+			}
+			Paginate = PoopJs.PaginateExtension.Paginate;
+			countPaginate() {
+				let data = { running: 0, queued: 0, };
+				for (let p of this.Paginate.instances) {
+					data.running += +p.running;
+					data.queued += p.queued;
+				}
+				return data;
+			}
+
+			updateInfo() {
+				let data = this.countPaginate();
+				if (!data.running && !data.queued) {
+					this.hide();
+				} else {
+					this.show();
+					this.button.innerText = `... +${data.running + data.queued}`;
+				}
+			}
+
+			async init() {
+				while(true) {
+					await Promise.frame();
+					this.updateInfo();
+				}
+			}
+		}
+
 	}
 }

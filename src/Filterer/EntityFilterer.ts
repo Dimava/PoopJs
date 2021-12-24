@@ -10,21 +10,24 @@ namespace PoopJs {
 		type MapType<K extends object, V> =// Map<K, V> | 
 			WeakMap<K, V>;
 
+		function toElArray(entrySelector: selector | (() => HTMLElement[])): HTMLElement[] {
+			return typeof entrySelector == 'function' ? entrySelector() : qq(entrySelector);
+		}
+
 		export class EntryFilterer<Data extends {} = {}> {
-			on = true;
 			container: HTMLElement;
 			entrySelector: selector | (() => HTMLElement[]);
-			constructor(entrySelector: selector | (() => HTMLElement[]), enabled = true) {
+			constructor(entrySelector: selector | (() => HTMLElement[]), enabled: boolean | 'soft' = 'soft') {
 				this.entrySelector = entrySelector;
 				this.container = elm('.ef-container');
 				if (!entrySelector) {
 					// disable if no selector provided (likely is a generic ef)
 					this.disable();
+				} else if (enabled == 'soft') {
+					this.softDisable = true;
+					this.disable('soft');
 				}
-				if (!enabled) {
-					this.disable();
-				}
-				if (enabled) {
+				if (enabled != false) {
 					this.style();
 				}
 				this.update();
@@ -125,6 +128,9 @@ namespace PoopJs {
 			addPrefix(id: string, prefix: PrefixerFn<Data>, data: PrefixerPartial<Data> = {}): Prefixer<Data> {
 				return this.addItem(Prefixer, this.modifiers, data, { id, prefix });
 			}
+			addPaginationInfo(id: string = 'pginfo', data: Partial<FiltererItemSource> = {}) {
+				return this.addItem(PaginationInfoFilter, this.filters, data, { id });
+			}
 
 			filterEntries() {
 				for (let el of this.entries) {
@@ -200,7 +206,21 @@ namespace PoopJs {
 
 			update(reparse = this.reparsePending) {
 				this.updatePending = false;
-				if (this.disabled) return;
+				if (this.disabled == true) return;
+
+				let entries = typeof this.entrySelector == 'function' ? this.entrySelector() : qq(this.entrySelector);
+
+				if (this.disabled == 'soft') {
+					if (!entries.length) return;
+					this.enable();
+					return;
+				}
+				if (this.disabled != false) throw 0;
+
+				if (!entries.length && this.softDisable) {
+					this.disable('soft'); return;
+				}
+
 				if (reparse) {
 					this.entryDatas = new MapType();
 					this.reparsePending = false;
@@ -208,7 +228,6 @@ namespace PoopJs {
 				if (!this.container.closest('body')) {
 					this.container.appendTo('body');
 				}
-				let entries = typeof this.entrySelector == 'function' ? this.entrySelector() : qq(this.entrySelector);
 				if (this.entries.length != entries.length || this.entries) {
 					// TODO: sort entries in initial order
 				}
@@ -283,9 +302,11 @@ namespace PoopJs {
 				` + s;
 			}
 
-			disabled = false;
-			disable() {
+			softDisable = true;
+			disabled: boolean | 'soft' = false;
+			disable(soft?: 'soft') {
 				this.disabled = true;
+				if (soft == 'soft') this.disabled = 'soft';
 				this.container.remove();
 			}
 			enable() {

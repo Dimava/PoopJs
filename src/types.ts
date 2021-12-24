@@ -19,6 +19,7 @@ declare namespace fetch {
 	export const doc: typeof PoopJs.FetchExtension.doc & { cached: typeof PoopJs.FetchExtension.cachedDoc };
 	export const cachedDoc: typeof PoopJs.FetchExtension.cachedDoc;
 	export const json: typeof PoopJs.FetchExtension.json & { cached: typeof PoopJs.FetchExtension.cachedJson };
+	export const isCached: typeof PoopJs.FetchExtension.isCached;
 }
 
 interface Window {
@@ -34,6 +35,7 @@ interface Window {
 		doc: typeof PoopJs.FetchExtension.doc & { cached: typeof PoopJs.FetchExtension.cachedDoc };
 		cachedDoc: typeof PoopJs.FetchExtension.cachedDoc;
 		json: typeof PoopJs.FetchExtension.json & { cached: typeof PoopJs.FetchExtension.cachedJson };
+		isCached: typeof PoopJs.FetchExtension.isCached;
 	}
 }
 

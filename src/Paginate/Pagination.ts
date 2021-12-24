@@ -141,12 +141,12 @@ namespace PoopJs {
 
 
 			// fetching: 
-			async fetchDocument(link: Link, spinner = true): Promise<Document> {
+			async fetchDocument(link: Link, spinner = true, maxAge = 0): Promise<Document> {
 				this.doc = null;
 				let a = spinner && Paginate.linkToAnchor(link);
 				a?.classList.add('paginate-spin');
 				link = Paginate.linkToUrl(link);
-				this.doc = await fetch.doc(link);
+				this.doc = !maxAge ? await fetch.doc(link) : await fetch.cached.doc(link, { maxAge });
 				a?.classList.remove('paginate-spin');
 				return this.doc;
 			}
@@ -199,6 +199,7 @@ namespace PoopJs {
 					if (link.startsWith('http')) return link as url;
 					link = document.q<'a'>(link);
 				}
+				if (link.tagName != 'A') throw new Error('link should be <a> element!');
 				return (link as HTMLAnchorElement).href as url;
 			}
 			static linkToAnchor(link: Link): HTMLAnchorElement {
@@ -232,6 +233,7 @@ namespace PoopJs {
 				click: selector[];
 				after: selector[];
 				replace: selector[];
+				maxAge: number;
 			};
 			staticCall(data: {
 				condition?: selector | (() => boolean),
@@ -242,6 +244,8 @@ namespace PoopJs {
 				replace?: selector | selector[],
 				start?: () => void;
 				end?: () => void;
+				maxAge?: number;
+				cache?: boolean;
 			}) {
 				function toArray<T>(v?: T | T[] | undefined): T[] {
 					if (Array.isArray(v)) return v;
@@ -269,6 +273,7 @@ namespace PoopJs {
 					click: toArray<selector>(data.click),
 					after: toArray<selector>(data.after),
 					replace: toArray<selector>(data.replace),
+					maxAge: data.maxAge ?? (data.cache ? 365 * 24 * 2600e3 : 0),
 				};
 				this.condition = () => {
 					if (!this.data.condition()) return false;
@@ -285,7 +290,7 @@ namespace PoopJs {
 					await data.start?.();
 					this.data.click.map(e => document.q(e)?.click());
 					let doc = findOne(this.data.doc);
-					if (doc) await this.fetchDocument(doc);
+					if (doc) await this.fetchDocument(doc, true, this.data.maxAge);
 					this.data.after.map(s => this.after(s));
 					this.data.replace.map(s => this.replace(s));
 					await data.end?.();

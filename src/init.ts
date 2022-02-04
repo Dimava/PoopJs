@@ -17,22 +17,22 @@
 
 namespace PoopJs {
 
-	export function __init__(window: Window): "inited" | "already inited" {
-		if (!window) window = globalThis.window as Window;
+	export function __init__(window: Window & typeof globalThis): "inited" | "already inited" {
+		if (!window) window = globalThis.window as Window & typeof globalThis;
 
 		window.elm = Elm.elm;
 		window.q = Object.assign(QuerySelector.WindowQ.q, { orElm: PoopJs.Elm.qOrElm });
 		window.qq = QuerySelector.WindowQ.qq;
-		ObjectExtension.defineValue(Element.prototype, 'q', QuerySelector.ElementQ.q);
-		ObjectExtension.defineValue(Element.prototype, 'qq', QuerySelector.ElementQ.qq);
-		ObjectExtension.defineValue(Element.prototype, 'appendTo', ElementExtension.appendTo);
-		ObjectExtension.defineValue(Element.prototype, 'emit', ElementExtension.emit);
-		ObjectExtension.defineValue(Document.prototype, 'q', QuerySelector.DocumentQ.q);
-		ObjectExtension.defineValue(Document.prototype, 'qq', QuerySelector.DocumentQ.qq);
+		ObjectExtension.defineValue(window.Element.prototype, 'q', QuerySelector.ElementQ.q);
+		ObjectExtension.defineValue(window.Element.prototype, 'qq', QuerySelector.ElementQ.qq);
+		ObjectExtension.defineValue(window.Element.prototype, 'appendTo', ElementExtension.appendTo);
+		ObjectExtension.defineValue(window.Element.prototype, 'emit', ElementExtension.emit);
+		ObjectExtension.defineValue(window.Document.prototype, 'q', QuerySelector.DocumentQ.q);
+		ObjectExtension.defineValue(window.Document.prototype, 'qq', QuerySelector.DocumentQ.qq);
 
-		ObjectExtension.defineValue(Promise, 'empty', PromiseExtension.empty);
-		ObjectExtension.defineValue(Promise, 'frame', PromiseExtension.frame);
-		ObjectExtension.defineValue(Promise, 'raf', PromiseExtension.frame);
+		ObjectExtension.defineValue(window.Promise, 'empty', PromiseExtension.empty);
+		ObjectExtension.defineValue(window.Promise, 'frame', PromiseExtension.frame);
+		ObjectExtension.defineValue(window.Promise, 'raf', PromiseExtension.frame);
 
 		window.fetch.cached = FetchExtension.cached as any;
 		window.fetch.doc = FetchExtension.doc as any;
@@ -43,16 +43,16 @@ namespace PoopJs {
 		window.fetch.json.cached = FetchExtension.cachedJson;
 		window.fetch.cached.json = FetchExtension.cachedJson;
 		window.fetch.isCached = FetchExtension.isCached;
-		ObjectExtension.defineValue(Response.prototype, 'cachedAt', 0);
-		ObjectExtension.defineValue(Document.prototype, 'cachedAt', 0);
+		ObjectExtension.defineValue(window.Response.prototype, 'cachedAt', 0);
+		ObjectExtension.defineValue(window.Document.prototype, 'cachedAt', 0);
 
-		ObjectExtension.defineValue(Object, 'defineValue', ObjectExtension.defineValue);
-		ObjectExtension.defineValue(Object, 'defineGetter', ObjectExtension.defineGetter);
+		ObjectExtension.defineValue(window.Object, 'defineValue', ObjectExtension.defineValue);
+		ObjectExtension.defineValue(window.Object, 'defineGetter', ObjectExtension.defineGetter);
 		// ObjectExtension.defineValue(Object, 'map', ObjectExtension.map);
 
-		ObjectExtension.defineValue(Array, 'map', ArrayExtension.map);
-		ObjectExtension.defineValue(Array.prototype, 'pmap', ArrayExtension.pmap);
-		ObjectExtension.defineValue(Array.prototype, 'vsort', ArrayExtension.vsort);
+		ObjectExtension.defineValue(window.Array, 'map', ArrayExtension.map);
+		ObjectExtension.defineValue(window.Array.prototype, 'pmap', ArrayExtension.pmap);
+		ObjectExtension.defineValue(window.Array.prototype, 'vsort', ArrayExtension.vsort);
 
 		window.paginate = PoopJs.paginate as any;
 		window.imageScrolling = PoopJs.ImageScrollingExtension;

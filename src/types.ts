@@ -2,9 +2,38 @@ namespace PoopJs {
 	export type ValueOf<T> = T[keyof T];
 	export type MappedObject<T, V> = { [P in keyof T]: V };
 
-	export type selector = string | (string & { _: 'selector' })
-	export type url = `http${string}` & { _: 'url' };
+	export type selector = string | string & { _?: 'selector' }
+	export type url = `http${string}` & { _?: 'url' };
 	export type Link = HTMLAnchorElement | selector | url;
+
+
+
+
+	type trimStart<S, C extends string> = S extends `${C}${infer S1}` ? trimStart<S1, C> : S;
+	type trimEnd<S, C extends string> = S extends `${infer S1}${C}` ? trimEnd<S1, C> : S;
+	type trim<S, C extends string = ' ' | '\t' | '\n'> = trimStart<trimEnd<S, C>, C>;
+
+	type split<S, C extends string> = S extends `${infer S1}${C}${infer S2}` ? split<S1, C> | split<S2, C> : S;
+	type splitStart<S, C extends string> = S extends `${infer S1}${C}${infer _S2}` ? splitStart<S1, C> : S;
+	type splitEnd<S, C extends string> = S extends `${infer _S1}${C}${infer S2}` ? splitEnd<S2, C> : S;
+
+	type replace<S, C extends string, V extends string> = S extends `${infer S1}${C}${infer S3}` ? replace<`${S1}${V}${S3}`, C, V> : S;
+
+	type ws = ' ' | '\t' | '\n';
+
+	// type insaneSelector = ' a , b[qwe] \n , c.x , d#y , x e , x>f , x > g , [qwe] , h:not(x>y) , img ';
+
+	// type _i1 = replace<insaneSelector, `[${string}]`, '.'>;
+	// type _i15 = replace<_i1, `(${string})`, '.'>;
+	// type _i17 = replace<_i15, Exclude<ws, ' '>, ' '>;
+	// type _i2 = split<_i17, ','>;
+	// type _i3 = trim<_i2>;
+	// type _i4 = splitEnd<_i3, ws | '>'>;
+	// type _i5 = splitStart<_i4, '.' | '#' | ':'>;
+	// type _i6 = (HTMLElementTagNameMap & { '': HTMLElement } & { [k: string]: HTMLElement })[_i5];
+	export type TagNameFromSelector<S extends string> = splitStart<splitEnd<trim<split<replace<replace<replace<S, `[${string}]`, '.'>, `(${string})`, '.'>, Exclude<ws, ' '>, ' '>, ','>>, ws | '>'>, '.' | '#' | ':'>;
+
+	export type TagElementFromTagName<S> = S extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[S] : HTMLElement;
 }
 
 
@@ -15,11 +44,11 @@ declare const qq: typeof PoopJs.QuerySelector.WindowQ.qq;
 declare const paginate: typeof PoopJs.paginate;
 declare const imageScrolling: typeof PoopJs.ImageScrollingExtension;
 declare namespace fetch {
-	export const cached: typeof PoopJs.FetchExtension.cached & { doc: typeof PoopJs.FetchExtension.cachedDoc, json: typeof PoopJs.FetchExtension.cachedJson };
-	export const doc: typeof PoopJs.FetchExtension.doc & { cached: typeof PoopJs.FetchExtension.cachedDoc };
-	export const cachedDoc: typeof PoopJs.FetchExtension.cachedDoc;
-	export const json: typeof PoopJs.FetchExtension.json & { cached: typeof PoopJs.FetchExtension.cachedJson };
-	export const isCached: typeof PoopJs.FetchExtension.isCached;
+	export let cached: typeof PoopJs.FetchExtension.cached & { doc: typeof PoopJs.FetchExtension.cachedDoc, json: typeof PoopJs.FetchExtension.cachedJson };
+	export let doc: typeof PoopJs.FetchExtension.doc & { cached: typeof PoopJs.FetchExtension.cachedDoc };
+	export let cachedDoc: typeof PoopJs.FetchExtension.cachedDoc;
+	export let json: typeof PoopJs.FetchExtension.json & { cached: typeof PoopJs.FetchExtension.cachedJson };
+	export let isCached: typeof PoopJs.FetchExtension.isCached;
 }
 
 interface Window {
@@ -79,6 +108,9 @@ interface DateConstructor {
 interface Date {
 	_getTime(): number;
 }
+interface Performance {
+	_now: Performance['now'];
+}
 
 interface Response {
 	cachedAt: number;
@@ -90,4 +122,12 @@ interface Response {
 
 interface Function {
 	bind<T, R, ARGS extends any[]>(this: (this: T, ...args: ARGS) => R, thisArg: T): ((...args: ARGS) => R)
+}
+
+// force allow ''.split('.').pop()!
+interface String {
+	split(splitter: string): [string, ...string[]];
+}
+interface Array<T> {
+	pop(): this extends [T, ...T[]] ? T : T | undefined;
 }

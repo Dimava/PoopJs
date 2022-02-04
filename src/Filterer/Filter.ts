@@ -243,15 +243,18 @@ namespace PoopJs {
 			updateInfo() {
 				let data = this.countPaginate();
 				if (!data.running && !data.queued) {
-					this.hide();
+					this.hidden || this.hide();
 				} else {
-					this.show();
-					this.button.innerText = `... +${data.running + data.queued}`;
+					this.hidden && this.show();
+					let text = `... +${data.running + data.queued}`;
+					if (this.button.innerHTML != text) {
+						this.button.innerText = text;
+					}
 				}
 			}
 
 			async init() {
-				while(true) {
+				while (true) {
 					await Promise.frame();
 					this.updateInfo();
 				}

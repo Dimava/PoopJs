@@ -20,16 +20,19 @@ namespace PoopJs {
 			constructor(entrySelector: selector | (() => HTMLElement[]), enabled: boolean | 'soft' = 'soft') {
 				this.entrySelector = entrySelector;
 				this.container = elm('.ef-container');
-				if (!entrySelector) {
-					// disable if no selector provided (likely is a generic ef)
-					this.disable();
-				} else if (enabled == 'soft') {
+
+				if (enabled == 'soft') {
 					this.softDisable = true;
 					this.disable('soft');
+				} else if (enabled) {
+					this.softDisable = false;
+				} else {
+					// enabled is falsy
+					this.softDisable = false;
+					this.disable();
 				}
-				if (enabled != false) {
-					this.style();
-				}
+				this.style();
+
 				this.update();
 				document.addEventListener<PaginateExtension.PModifyEvent>('paginationmodify', () => this.requestUpdate());
 				etc.onheightchange(() => this.requestUpdate());
@@ -143,6 +146,12 @@ namespace PoopJs {
 				}
 			}
 
+			_previousState = {
+				allSortersOff: true,
+				updateDuration: 0,
+				finishedAt: 0,
+			};
+
 			orderedEntries: HTMLElement[] = [];
 			orderMode: 'css' | 'swap' = 'css';
 			sortEntries() {
@@ -168,19 +177,26 @@ namespace PoopJs {
 						br.remove();
 					}
 				} else {
-					entries.map((e, i) => {
-						if (allOff) {
-							e.classList.remove('ef-reorder');
-							e.parentElement.classList.remove('ef-reorder-container');
-						} else {
-							// use `display:flex` container and `order:var(--ef-order)` for children 
-							e.classList.add('ef-reorder');
+					if (allOff != this._previousState.allSortersOff) {
+						entries.map((e, i) => {
+							if (allOff) {
+								e.classList.remove('ef-reorder');
+								e.parentElement.classList.remove('ef-reorder-container');
+							} else {
+								// use `flex` or `grid` container and `order:var(--ef-order)` for children 
+								e.classList.add('ef-reorder');
+								e.parentElement.classList.add('ef-reorder-container');
+							}
+						});
+					}
+					if (!allOff) {
+						entries.map((e, i) => {
 							e.style.setProperty('--ef-order', i + '');
-							e.parentElement.classList.remove('ef-reorder-container');
-						}
-					});
+						});
+					}
 				}
 				this.orderedEntries = entries;
+				this._previousState.allSortersOff = allOff;
 			}
 
 			modifyEntries() {
@@ -204,21 +220,34 @@ namespace PoopJs {
 				}
 			}
 
+			findEntries(): HTMLElement[] {
+				return typeof this.entrySelector == 'function' ? this.entrySelector() : qq(this.entrySelector);
+			}
+
 			update(reparse = this.reparsePending) {
+				let earliestUpdate = this._previousState.finishedAt + Math.min(1000, 8 * this._previousState.updateDuration);
+				if (performance.now() < earliestUpdate) {
+					requestAnimationFrame(() => this.update());
+					return;
+				}
 				this.updatePending = false;
 				if (this.disabled == true) return;
+				let now = performance.now();
 
-				let entries = typeof this.entrySelector == 'function' ? this.entrySelector() : qq(this.entrySelector);
+				let entries = this.findEntries();
 
 				if (this.disabled == 'soft') {
 					if (!entries.length) return;
+					PoopJs.debug && console.log(`Ef soft-enabled: x0=>x${entries.length}`, this.entrySelector, this);
 					this.enable();
 					return;
 				}
 				if (this.disabled != false) throw 0;
 
 				if (!entries.length && this.softDisable) {
-					this.disable('soft'); return;
+					PoopJs.debug && console.log(`Ef soft-disabled: x${this.enable.length}=>x0`, this.entrySelector, this);
+					this.disable('soft');
+					return;
 				}
 
 				if (reparse) {
@@ -228,13 +257,18 @@ namespace PoopJs {
 				if (!this.container.closest('body')) {
 					this.container.appendTo('body');
 				}
-				if (this.entries.length != entries.length || this.entries) {
+				if (this.entries.length != entries.length) {
+					PoopJs.debug && console.log(`Ef update: x${this.entries.length}=>x${entries.length}`, this.entrySelector, this);
+					// || this.entries
 					// TODO: sort entries in initial order
 				}
 				this.entries = entries;
 				this.filterEntries();
 				this.sortEntries();
 				this.modifyEntries();
+				let timeUsed = performance.now() - now;
+				this._previousState.updateDuration = timeUsed;
+				this._previousState.finishedAt = performance.now();
 			}
 
 			offIncompatible(incompatible: string[]) {

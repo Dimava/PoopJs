@@ -16,7 +16,7 @@ namespace PoopJs {
 				data.button ??= 'button.ef-item';
 				Object.assign(this, data);
 
-				this.button = elm(data.button,
+				this.button = elm<'button'>(data.button,
 					click => this.click(click),
 					contextmenu => this.contextmenu(contextmenu),
 				);

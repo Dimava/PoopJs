@@ -13,7 +13,7 @@
 		"preserveConstEnums": true,
 		"outFile": "./dist/poop.js",
 		"declaration": true,
-		"rootDir": "./src/",
+		"rootDir": "src",
 		"inlineSourceMap": true,
 		"inlineSources": true,
 	}

@@ -7,20 +7,41 @@ namespace PoopJs {
 		export let startRealtime = 0;
 		export let startTime = 0;
 
-		export function toFakeTime(time: number) {
+		// export let speedMultiplier = 1;
+		export let performanceDeltaOffset = 0;
+		export let performanceStartRealtime = 0;
+		export let performanceStartTime = 0;
+
+		export let usedMethods = {
+			date: true,
+			performance: true,
+		}
+
+		export function toFakeTime(realtime: number) {
+			if (!usedMethods.date) return realtime;
 			return Math.floor(
-				(time - startRealtime) * speedMultiplier + startTime + deltaOffset
+				(realtime - startRealtime) * speedMultiplier + startTime + deltaOffset
 			);
+		}
+		export function toPerformanceFakeTime(realtime: number) {
+			if (!usedMethods.performance) return realtime;
+			return (realtime - performanceStartRealtime) * speedMultiplier
+				+ performanceStartTime + performanceDeltaOffset;
 		}
 
 		export let bracketSpeeds = [0.05, 0.25, 1, 2, 5, 10, 20, 60, 120];
-		export function speedhack(speed: number) {
+		export function speedhack(speed: number = 1) {
+			if (typeof speed != 'number') {
+				throw new Error(`DateNowHack: invalid speed: ${speed}`);
+			}
 			activate();
+			activatePerformance();
 			speedMultiplier = speed;
 			location.hash = speed + '';
 		}
 		export function timejump(seconds: number) {
 			activate();
+			activatePerformance();
 			deltaOffset += seconds * 1000;
 		}
 		export function switchSpeedhack(dir: number) {
@@ -62,6 +83,15 @@ namespace PoopJs {
 				return this.getTime();
 			}
 			activated = true;
+		}
+		export let performanceActivated = false;
+		function activatePerformance() {
+			performance._now ??= performance.now;
+			performanceStartTime = performance.now();
+			performanceStartRealtime = performance._now();
+			performanceDeltaOffset = 0;
+			performance.now = () => toPerformanceFakeTime(performance._now());
+			performanceActivated = true;
 		}
 
 	}

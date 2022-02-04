@@ -3,9 +3,9 @@ namespace PoopJs {
 	export namespace PaginateExtension {
 
 		export type PRequestEvent = CustomEvent<{
-			reason?: Event,
+			reason?: KeyboardEvent | MouseEvent,
 			count: number,
-			consumed: number;
+			consumed: number,
 			_event?: 'paginationrequest',
 		}>;
 		export type PStartEvent = CustomEvent<{
@@ -32,6 +32,7 @@ namespace PoopJs {
 			queued = 0;
 			running = false;
 			_inited = false;
+			shiftRequestCount?: number | (() => number);
 
 			static shiftRequestCount = 10;
 			static _inited = false;
@@ -71,11 +72,17 @@ namespace PoopJs {
 				document.addEventListener<PRequestEvent>('paginationrequest', this.onPaginationRequest.bind(this));
 				document.addEventListener<PEndEvent>('paginationend', this.onPaginationEnd.bind(this));
 				Paginate.instances.push(this);
+				if (PoopJs.debug) {
+					let active = this.canConsumeRequest() ? 'active' : 'inactive';
+					if (active == 'active')
+						PoopJs.debug && console.log(`Paginate instantiated (${active}): `, this.data);
+				}
 			}
 			onPaginationRequest(event: PRequestEvent) {
 				if (this.canConsumeRequest()) {
 					event.detail.consumed++;
-					this.queued += event.detail.count;
+					let queued = !event.detail.reason?.shiftKey ? null : typeof this.shiftRequestCount == 'function' ? this.shiftRequestCount() : this.shiftRequestCount;
+					this.queued += queued ?? event.detail.count;
 				}
 				if (!this.running && this.queued) {
 					this.consumeRequest();
@@ -118,7 +125,7 @@ namespace PoopJs {
 
 
 			// emitters
-			static requestPagination(count = 1, reason?: Event, target: Element = document.body) {
+			static requestPagination(count = 1, reason?: PRequestEvent['detail']['reason'], target: Element = document.body) {
 				let detail: PRequestEvent['detail'] = { count, reason, consumed: 0 };
 				function fail(event: PRequestEvent) {
 					if (event.detail.consumed == 0) {
@@ -139,27 +146,19 @@ namespace PoopJs {
 				document.body.emit<PEndEvent>('paginationend', { paginate: this });
 			}
 
-
 			// fetching: 
-			async fetchDocument(link: Link, spinner = true, maxAge = 0): Promise<Document> {
+			async fetchDocument(link: Link, spinner = true, maxAge: deltaTime = 0): Promise<Document> {
 				this.doc = null;
 				let a = spinner && Paginate.linkToAnchor(link);
 				a?.classList.add('paginate-spin');
 				link = Paginate.linkToUrl(link);
-				this.doc = !maxAge ? await fetch.doc(link) : await fetch.cached.doc(link, { maxAge });
+				let init = { maxAge, xml: this.data.xml };
+				this.doc = !maxAge ? await fetch.doc(link, init) : await fetch.cached.doc(link, init);
 				a?.classList.remove('paginate-spin');
 				return this.doc;
 			}
-			async fetchCachedDocument(link: Link, spinner = true): Promise<Document> {
-				this.doc = null;
-				let a = spinner && Paginate.linkToAnchor(link);
-				a?.classList.add('paginate-spin');
-				link = Paginate.linkToUrl(link);
-				this.doc = await fetch.cached.doc(link);
-				a?.classList.remove('paginate-spin');
-				return this.doc;
-			}
-			prefetch(source: selector) {
+
+			static prefetch(source: selector) {
 				document.qq<'a'>(source).map(e => {
 					if (e.href) {
 						elm(`link[rel="prefetch"][href="${e.href}"]`).appendTo('head');
@@ -210,16 +209,7 @@ namespace PoopJs {
 				return link;
 			}
 
-			static staticCall<T>(data: {
-				condition?: selector | (() => boolean),
-				prefetch?: selector | selector[],
-				click?: selector | selector[],
-				doc?: selector | selector[],
-				after?: selector | selector[],
-				replace?: selector | selector[],
-				start?: () => void;
-				end?: () => void;
-			}) {
+			static staticCall<T>(this: void, data: Parameters<Paginate['staticCall']>[0]) {
 				let p = new Paginate();
 				p.staticCall(data);
 				return p;
@@ -233,7 +223,11 @@ namespace PoopJs {
 				click: selector[];
 				after: selector[];
 				replace: selector[];
-				maxAge: number;
+				maxAge: deltaTime;
+				start?: (this: Paginate) => void;
+				modify?: (this: Paginate, doc: Document) => void;
+				end?: (this: Paginate, doc: Document) => void;
+				xml?: boolean;
 			};
 			staticCall(data: {
 				condition?: selector | (() => boolean),
@@ -242,10 +236,14 @@ namespace PoopJs {
 				doc?: selector | selector[],
 				after?: selector | selector[],
 				replace?: selector | selector[],
-				start?: () => void;
-				end?: () => void;
-				maxAge?: number;
-				cache?: boolean;
+				start?: (this: Paginate) => void;
+				modify?: (this: Paginate, doc: Document) => void;
+				end?: (this: Paginate, doc: Document) => void;
+				maxAge?: deltaTime;
+				cache?: deltaTime | true;
+				xml?: boolean;
+				pager?: selector | selector[];
+				shifted?: number | (() => number);
 			}) {
 				function toArray<T>(v?: T | T[] | undefined): T[] {
 					if (Array.isArray(v)) return v;
@@ -273,8 +271,16 @@ namespace PoopJs {
 					click: toArray<selector>(data.click),
 					after: toArray<selector>(data.after),
 					replace: toArray<selector>(data.replace),
-					maxAge: data.maxAge ?? (data.cache ? 365 * 24 * 2600e3 : 0),
+					maxAge: data.maxAge ?? (data.cache == true ? '1y' : data.cache),
+					start: data.start, modify: data.modify, end: data.end,
+					xml: data.xml,
 				};
+				this.shiftRequestCount = data.shifted;
+				if (data.pager) {
+					let pager = toArray<selector>(data.pager);
+					this.data.doc = this.data.doc.flatMap(e => pager.map(p => `${p} ${e}`));
+					this.data.replace.push(...pager);
+				}
 				this.condition = () => {
 					if (!this.data.condition()) return false;
 					if (!canFind(this.data.doc)) return false;
@@ -283,17 +289,20 @@ namespace PoopJs {
 				};
 				this.init();
 				if (this.data.condition()) {
-					this.data.prefetch.map(s => this.prefetch(s));
+					this.data.prefetch.map(s => Paginate.prefetch(s));
 				}
 				this.onrun = async () => {
 					// if (!fixedData.condition()) return;
-					await data.start?.();
+					await this.data.start?.call(this);
 					this.data.click.map(e => document.q(e)?.click());
 					let doc = findOne(this.data.doc);
-					if (doc) await this.fetchDocument(doc, true, this.data.maxAge);
-					this.data.after.map(s => this.after(s));
-					this.data.replace.map(s => this.replace(s));
-					await data.end?.();
+					if (doc) {
+						await this.fetchDocument(doc, true, this.data.maxAge);
+						this.data.replace.map(s => this.replace(s));
+						this.data.after.map(s => this.after(s));
+						await this.data.modify?.call(this, this.doc);
+					}
+					await this.data.end?.call(this, doc && this.doc);
 				}
 			}
 
@@ -303,7 +312,7 @@ namespace PoopJs {
 		type Somehow<T> = null | T | T[] | (() => (null | T | T[]));
 		type SomehowAsync<T> = null | T | T[] | (() => (null | T | T[] | Promise<null | T | T[]>));
 
-		export const paginate = Object.setPrototypeOf(Paginate.staticCall.bind(Paginate), new Paginate());
+		export const paginate = Object.setPrototypeOf(Object.assign(Paginate.staticCall, new Paginate()), Paginate);
 	}
 
 	export const paginate = PaginateExtension.paginate;

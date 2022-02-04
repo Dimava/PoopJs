@@ -23,8 +23,9 @@ namespace PoopJs {
 		export let allowOverrideOnListeners = false;
 
 		export function elm<K extends keyof HTMLElementTagNameMap>(selector: K, ...children: (Child | Listener)[]): HTMLElementTagNameMap[K];
+		export function elm<K extends keyof HTMLElementTagNameMap>(selector: keyof HTMLElementTagNameMap extends K ? never : selector, ...children: (Child | Listener)[]): HTMLElementTagNameMap[K];
+		export function elm<S extends selector, N = TagNameFromSelector<S>>(selector: S, ...children: (Child | Listener)[]): TagElementFromTagName<N>;
 		export function elm<E extends Element = HTMLElement>(selector: selector, ...children: (Child | Listener)[]): E;
-		export function elm<K extends keyof HTMLElementTagNameMap>(selector: selector, ...children: (Child | Listener)[]): HTMLElementTagNameMap[K];
 		export function elm(): HTMLDivElement;
 		export function elm(selector: string = '', ...children: (Child | Listener)[]): HTMLElement {
 			if (selector.replaceAll(elmRegex, '') != '') {
@@ -76,8 +77,8 @@ namespace PoopJs {
 		}
 
 		export function qOrElm<K extends keyof HTMLElementTagNameMap>(selector: K, parent?: ParentNode | selector): HTMLElementTagNameMap[K];
+		export function qOrElm<S extends selector, N = TagNameFromSelector<S>>(selector: S, parent?: ParentNode | selector): TagElementFromTagName<N>;
 		export function qOrElm<E extends Element = HTMLElement>(selector: string, parent?: ParentNode | selector): E;
-		export function qOrElm<K extends keyof HTMLElementTagNameMap>(selector: string, parent?: ParentNode | selector): HTMLElementTagNameMap[K];
 		export function qOrElm(selector: string, parent?: ParentNode | string) {
 			if (typeof parent == 'string') {
 				parent = document.querySelector(parent) as ParentNode;

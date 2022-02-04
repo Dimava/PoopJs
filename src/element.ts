@@ -4,30 +4,34 @@ namespace PoopJs {
 
 		export namespace WindowQ {
 			export function q<K extends keyof HTMLElementTagNameMap>(selector: K): HTMLElementTagNameMap[K];
-			export function q<E extends Element = HTMLElement>(selector: selector): E;
+			export function q<S extends selector, N = TagNameFromSelector<S>>(selector: S): TagElementFromTagName<N>;
+			export function q<E extends Element>(selector: selector): E;
 			export function q<K extends keyof HTMLElementTagNameMap>(selector: selector): HTMLElementTagNameMap[K];
 			export function q(selector: string) {
-				return document.querySelector(selector);
+				return (this?.document ?? document).querySelector(selector);
 			}
 
 			export function qq<K extends keyof HTMLElementTagNameMap>(selector: K): (HTMLElementTagNameMap[K])[];
-			export function qq<E extends Element = HTMLElement>(selector: selector): E[];
+			export function qq<S extends selector, N = TagNameFromSelector<S>>(selector: S): TagElementFromTagName<N>[];
+			export function qq<E extends Element>(selector: selector): E[];
 			export function qq<K extends keyof HTMLElementTagNameMap>(selector: selector): (HTMLElementTagNameMap[K])[];
 			export function qq(selector: string) {
-				return [...document.querySelectorAll(selector)];
+				return [...(this?.document ?? document).querySelectorAll(selector)];
 			}
 		}
 
 		export namespace DocumentQ {
 			export function q<K extends keyof HTMLElementTagNameMap>(this: Document, selector: K): HTMLElementTagNameMap[K];
-			export function q<E extends Element = HTMLElement>(this: Document, selector: selector): E;
+			export function q<S extends selector, N = TagNameFromSelector<S>>(this: Document, selector: S): TagElementFromTagName<N>;
+			export function q<E extends Element>(this: Document, selector: selector): E;
 			export function q<K extends keyof HTMLElementTagNameMap>(this: Document, selector: selector): HTMLElementTagNameMap[K];
 			export function q(this: Document, selector: string) {
 				return this.documentElement.querySelector(selector);
 			}
 
 			export function qq<K extends keyof HTMLElementTagNameMap>(this: Document, selector: K): (HTMLElementTagNameMap[K])[];
-			export function qq<E extends Element = HTMLElement>(this: Document, selector: selector): E[];
+			export function qq<S extends selector, N = TagNameFromSelector<S>>(this: Document, selector: S): TagElementFromTagName<N>[];
+			export function qq<E extends Element>(this: Document, selector: selector): E[];
 			export function qq<K extends keyof HTMLElementTagNameMap>(this: Document, selector: selector): (HTMLElementTagNameMap[K])[];
 			export function qq(this: Document, selector: string) {
 				return [...this.documentElement.querySelectorAll(selector)];
@@ -36,14 +40,16 @@ namespace PoopJs {
 
 		export namespace ElementQ {
 			export function q<K extends keyof HTMLElementTagNameMap>(this: Element, selector: K): HTMLElementTagNameMap[K];
-			export function q<E extends Element = HTMLElement>(this: Element, selector: selector): E;
+			export function q<S extends selector, N = TagNameFromSelector<S>>(this: Element, selector: S): TagElementFromTagName<N>;
+			export function q<E extends Element>(this: Element, selector: selector): E;
 			export function q<K extends keyof HTMLElementTagNameMap>(this: Element, selector: selector): HTMLElementTagNameMap[K];
 			export function q(this: Element, selector: string) {
 				return this.querySelector(selector);
 			}
 
 			export function qq<K extends keyof HTMLElementTagNameMap>(this: Element, selector: K): (HTMLElementTagNameMap[K])[];
-			export function qq<E extends Element = HTMLElement>(this: Element, selector: selector): E[];
+			export function qq<S extends selector, N = TagNameFromSelector<S>>(this: Element, selector: S): TagElementFromTagName<N>[];
+			export function qq<E extends Element>(this: Element, selector: selector): E[];
 			export function qq<K extends keyof HTMLElementTagNameMap>(this: Element, selector: selector): (HTMLElementTagNameMap[K])[];
 			export function qq(this: Element, selector: string) {
 				return [...this.querySelectorAll(selector)];

@@ -66,7 +66,7 @@ namespace PoopJs {
 	}
 
 	ObjectExtension.defineGetter(window, '__init__', () => __init__(window));
-	Object.assign(globalThis, { PoopJs });
+	// Object.assign(globalThis, { PoopJs });
 
 	if (window.localStorage.__init__) {
 		window.__init__;

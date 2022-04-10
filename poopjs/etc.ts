@@ -126,6 +126,8 @@ namespace PoopJs {
 			},
 		});
 		Object.defineProperty(PoopJs, 'kds', {
+			configurable: true,
+			enumerable: true,
 			get: () => etc.kds,
 			set: (v) => Object.assign(etc.kds, v),
 		});

@@ -87,6 +87,11 @@ interface ObjectConstructor {
 	defineGetter: typeof PoopJs.ObjectExtension.defineGetter;
 	// map: typeof PoopJs.ObjectExtension.map;
 	setPrototypeOf<T, P>(o: T, proto: P): T & P;
+
+
+	fromEntries<K extends string | number | symbol, V>(
+		entries: readonly (readonly [K, V])[]
+	): { [k in K]: V };
 }
 interface PromiseConstructor {
 	empty: typeof PoopJs.PromiseExtension.empty;
@@ -96,7 +101,8 @@ interface PromiseConstructor {
 
 interface Array<T> {
 	vsort: typeof PoopJs.ArrayExtension.vsort;
-	pmap: typeof PoopJs.ArrayExtension.pmap;
+	// pmap: typeof PoopJs.ArrayExtension.pmap;
+	pmap: typeof PoopJs.ArrayExtension.PMap.this_pmap;
 }
 interface ArrayConstructor {
 	map: typeof PoopJs.ArrayExtension.map;
@@ -110,6 +116,9 @@ interface Date {
 }
 interface Performance {
 	_now: Performance['now'];
+}
+interface Window {
+	_requestAnimationFrame: Window['requestAnimationFrame'];
 }
 
 interface Response {
@@ -130,4 +139,11 @@ interface String {
 }
 interface Array<T> {
 	pop(): this extends [T, ...T[]] ? T : T | undefined;
+	at(index: number): T;
+	findLast<S extends T>(predicate: (this: void, value: T, index: number, obj: T[]) => value is S, thisArg?: any): S | undefined;
+	findLast(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): T | undefined;
+}
+
+interface Math {
+	sign(x: number): -1 | 0 | 1;
 }

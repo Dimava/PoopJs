@@ -60,9 +60,14 @@ namespace PoopJs {
 			}
 		}
 		export function bindBrackets(mode = 'on') {
-			removeEventListener('keydown', onkeydown);
 			if (mode == 'on') {
-				addEventListener('keydown', onkeydown);
+				PoopJs.kds = {
+					BracketLeft: () => switchSpeedhack(-1),
+					BracketRight: () => switchSpeedhack(1),
+				};
+			} else {
+				delete PoopJs.kds.BracketLeft;
+				delete PoopJs.kds.BracketRight;
 			}
 		}
 
@@ -91,6 +96,8 @@ namespace PoopJs {
 			performanceStartRealtime = performance._now();
 			performanceDeltaOffset = 0;
 			performance.now = () => toPerformanceFakeTime(performance._now());
+			window._requestAnimationFrame ??= window.requestAnimationFrame;
+			window.requestAnimationFrame = f => window._requestAnimationFrame(n => f(toPerformanceFakeTime(n)));
 			performanceActivated = true;
 		}
 

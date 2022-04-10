@@ -2,16 +2,7 @@ namespace PoopJs {
 	export let debug = false;
 
 	export namespace etc {
-		export function keybind(key: string, fn: (event: KeyboardEvent) => void) {
-			let code = key.length == 1 ? 'Key' + key.toUpperCase() : key;
-			function onkeydown(event: KeyboardEvent) {
-				if (event.code == code) {
-					fn(event);
-				}
-			}
-			addEventListener('keydown', onkeydown);
-			return () => removeEventListener('keydown', onkeydown);
-		}
+
 
 		export async function fullscreen(on?: boolean) {
 			let central = ImageScrollingExtension.imageScrollingActive && ImageScrollingExtension.getCentralImg();
@@ -28,37 +19,6 @@ namespace PoopJs {
 			return !!document.fullscreenElement;
 		}
 
-		export function anybind(keyOrEvent: string | number, fn: (event: Event) => void) {
-			if (typeof keyOrEvent == "number") keyOrEvent = keyOrEvent + '';
-			// detect if it is event
-			let isEvent = window.hasOwnProperty('on' + keyOrEvent);
-			if (isEvent) {
-				addEventListener(keyOrEvent, fn);
-				return;
-			}
-			// parse key code
-			if (!isNaN(parseInt(keyOrEvent))) {
-				keyOrEvent = `Digit${keyOrEvent}`;
-			} else if (keyOrEvent.length == 1) {
-				keyOrEvent = `Key${keyOrEvent.toUpperCase()}`;
-			}
-			addEventListener('keydown', ev => {
-				if (ev.code != keyOrEvent) return;
-				fn(ev);
-			});
-		}
-
-		export function fullscreenOn(key: string) {
-			if (key == 'scroll') {
-				addEventListener('scroll', () => fullscreen(true));
-				return;
-			}
-			return keybind(key, () => fullscreen());
-		}
-
-		export function fIsForFullscreen() {
-			keybind('F', () => fullscreen());
-		}
 
 		export function hashCode(this: string);
 		export function hashCode(value: string);
@@ -100,16 +60,16 @@ namespace PoopJs {
 			if (fastScroll.active) fastScroll.off();
 			fastScroll.active = true;
 			fastScroll.speed = speed;
-			function onwheel(event: MouseEvent & { wheelDeltaY: number }) {
+			function onwheel(event: WheelEvent) {
 				if (event.defaultPrevented) return;
 				if (event.ctrlKey || event.shiftKey) return;
-				scrollBy(0, -Math.sign(event.wheelDeltaY) * innerHeight * fastScroll.speed);
+				scrollBy(0, -Math.sign(event.deltaY) * innerHeight * fastScroll.speed);
 				event.preventDefault();
 			}
-			addEventListener('mousewheel', onwheel, { passive: false });
+			addEventListener('wheel', onwheel, { passive: false });
 			fastScroll.off = () => {
 				fastScroll.active = false;
-				removeEventListener('mousewheel', onwheel);
+				removeEventListener('wheel', onwheel);
 			}
 		}
 		fastScroll.active = false;
@@ -170,7 +130,7 @@ namespace PoopJs {
 			set: (v) => Object.assign(etc.kds, v),
 		});
 
-		function generateKdsCodes(e: KeyboardEvent & MouseEvent) {
+		export function generateKdsCodes(e: KeyboardEvent & MouseEvent) {
 			let basePrefix = `${e.shiftKey ? '<' : ''}${e.ctrlKey ? '^' : ''}${e.altKey ? '>' : ''}`;
 			let baseCode = e.code
 				? e.code.replace(/Key|Digit|Arrow|Left|Right/, '')
@@ -209,15 +169,7 @@ namespace PoopJs {
 			addEventListener('mousedown', kdsListener);
 			return {};
 		}
-
-		export let _kbdInited = false;
-		export function makeKds(kds: { [k: string]: string | ((e: KeyboardEvent & MouseEvent) => void) }) {
-			return Object.assign(etc.kds, kds);
-		}
 	}
 	export declare let kds: typeof etc.kds;
 }
 
-// interface String {
-// 	hashCode: () => number;
-// }

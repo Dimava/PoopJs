@@ -13,7 +13,11 @@ namespace PoopJs {
 	}
 
 	export namespace FetchExtension {
-		export type RequestInitEx = RequestInit & { maxAge?: deltaTime, xml?: boolean };
+		export type RequestInitEx = RequestInit & {
+			maxAge?: deltaTime,
+			xml?: boolean,
+			cacheUrl?: string | 'post' & { _?: 'post' },
+		};
 		export type RequestInitExJson = RequestInit & { maxAge?: deltaTime, indexedDb?: boolean };
 		export let defaults: RequestInit = { credentials: 'include' };
 
@@ -45,7 +49,9 @@ namespace PoopJs {
 		export async function cached(url: string, init: RequestInitEx = {}): Promise<Response> {
 			let now = performance.now();
 			let cache = await openCache();
-			let response = await cache.match(url);
+			let cacheUrl = (init.cacheUrl ?? url) + '';
+			if (!cacheUrl.startsWith('http')) cacheUrl = url + '&&cacheUrl=' + cacheUrl;
+			let response = await cache.match(cacheUrl);
 			if (response) {
 				response.cachedAt = +response.headers.get('cached-at') || 0;
 				if (!isStale(response.cachedAt, normalizeDeltaTime(init.maxAge))) {
@@ -65,7 +71,7 @@ namespace PoopJs {
 					headers: [['cached-at', `${response.cachedAt}`], ...clone.headers.entries()]
 				};
 				let resultResponse = new Response(clone.body, init2);
-				cache.put(url, resultResponse);
+				cache.put(cacheUrl, resultResponse);
 				let dt = performance.now() - now;
 				PoopJs.debug && console.log(`Loaded response: ${toDur(dt)} / c:${toDur(init.maxAge)}`, url);
 			} else {
@@ -90,7 +96,7 @@ namespace PoopJs {
 		export async function doc(url: string, init: RequestInitEx = {}): Promise<Document> {
 			let response =
 				!init.xml ? await fetch(url, { ...defaults, ...init })
-				: await xmlResponse(url, init);
+					: await xmlResponse(url, init);
 			let text = await response.text();
 			let parser = new DOMParser();
 			let doc = parser.parseFromString(text, 'text/html');
@@ -102,7 +108,7 @@ namespace PoopJs {
 		}
 
 		export async function xmlResponse(url: string, init: RequestInitEx = {}): Promise<Response> {
-			let p = PromiseExtension.empty();
+			let p = PromiseExtension.empty<ProgressEvent<EventTarget>>();
 			let oReq = new XMLHttpRequest();
 			oReq.onload = p.r;
 			oReq.responseType = 'document';
@@ -163,6 +169,8 @@ namespace PoopJs {
 			}
 			let response = await cached(url, init);
 			let json = await response.json();
+			PoopJs.debug && console.log(`  = `, json);
+
 			if (!('cached' in json)) {
 				ObjectExtension.defineValue(json, 'cached', response.cachedAt);
 			}

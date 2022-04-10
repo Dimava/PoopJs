@@ -1,6 +1,6 @@
 {
 	"name": "@dimava/poopjs",
-	"version": "1.3.0",
+	"version": "1.4.2",
 	"main": "dist/poop.js",
 	"author": "Dimava",
 	"license": "MIT",

@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "watch",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "yarn: watch",
+			"detail": "yarn tsc --watch",
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+		}
+	]
+}

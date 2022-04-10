@@ -68,6 +68,22 @@ namespace PoopJs {
 				this.parsers.push(parser);
 				this.requestUpdate(true);
 			}
+			// reparseEntries(entries = this.entries): Data[] {
+			// 	// preparse
+			// 	let parents = new Set(entries.map(e=>e.parentElement));
+			// 	for (let parent of parents) {
+			// 		parent.classList.add('ef-entry-container');
+			// 	}
+			// 	for (let e of entries) {
+			// 		e.classList.add('ef-entry');
+			// 	}
+
+			// 	let datas =
+			// 	for (let parser of this.parsers) {
+
+			// 	}
+			// 	return 0 as any;
+			// }
 			parseEntry(el: HTMLElement): Data {
 				el.parentElement.classList.add('ef-entry-container');
 				el.classList.add('ef-entry');
@@ -105,12 +121,33 @@ namespace PoopJs {
 			sorters: ISorter<Data>[] = [];
 			modifiers: IModifier<Data>[] = [];
 
-			addFilter(id: string, filter: FilterFn<Data>, data: FilterPartial<Data> = {}): Filter<Data> {
+			get byName() {
+				return Object.assign(
+					Object.fromEntries(this.filters.map(e => [e.id, e])),
+					Object.fromEntries(this.sorters.map(e => [e.id, e])),
+					Object.fromEntries(this.modifiers.map(e => [e.id, e])),
+					{
+						filters: Object.fromEntries(this.filters.map(e => [e.id, e])),
+						sorters: Object.fromEntries(this.sorters.map(e => [e.id, e])),
+						modifiers: Object.fromEntries(this.modifiers.map(e => [e.id, e])),
+					},
+				);
+			}
+
+
+			addFilter(id: string, filter: FilterFn<Data>, data?: FilterPartial<Data>): Filter<Data>;
+			addFilter(propName: string & keyof Data): Filter<Data>;
+			addFilter(id: string, filter?: FilterFn<Data>, data: FilterPartial<Data> = {}): Filter<Data> {
+				if (!filter) return this.addFilter(id, d => d[id]);
 				return this.addItem(Filter, this.filters, data, { id, filter });
 			}
 			addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V>, data: ValueFilterPartial<Data, V>): ValueFilter<Data, V>;
 			addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V>, data: V);
-			addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V>, data: ValueFilterPartial<Data, V> | V) {
+			addVFilter<V extends number>(propName: string & keyof Data, defaultMin: V);
+			addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V> | V, data?: ValueFilterPartial<Data, V> | V) {
+				if (typeof filter != 'function') {
+					return this.addVFilter(id, (v, d) => d[id] > v, filter);
+				}
 				if (typeof data != 'object' || !data) {
 					data = { input: data as V };
 				}
@@ -224,14 +261,33 @@ namespace PoopJs {
 				return typeof this.entrySelector == 'function' ? this.entrySelector() : qq(this.entrySelector);
 			}
 
+			_earliestUpdate = 0;
 			update(reparse = this.reparsePending) {
-				let earliestUpdate = this._previousState.finishedAt + Math.min(1000, 8 * this._previousState.updateDuration);
+				if (this.disabled == true) return;
+				if (this._previousState.updateDuration == 99_999) {
+					PoopJs.debug && console.log(`EF: update in progress`);
+					requestAnimationFrame(() => {
+						setTimeout(() => {
+							this.update(reparse)
+						}, 100)
+					});
+					return;
+				}
+				let cooldown = Math.min(10000, 8 * this._previousState.updateDuration)
+				let earliestUpdate = this._previousState.finishedAt + cooldown;
 				if (performance.now() < earliestUpdate) {
+					if (this._earliestUpdate != earliestUpdate) {
+						this._earliestUpdate = earliestUpdate;
+						if (PoopJs.debug) {
+							console.log(`EF: update delayed by ${~~(earliestUpdate - performance.now())}ms ${''
+								} (last update duration: ${this._previousState.updateDuration})`);
+						}
+					}
+					this.updatePending = true;
 					requestAnimationFrame(() => this.update());
 					return;
 				}
 				this.updatePending = false;
-				if (this.disabled == true) return;
 				let now = performance.now();
 
 				let entries = this.findEntries();
@@ -267,8 +323,13 @@ namespace PoopJs {
 				this.sortEntries();
 				this.modifyEntries();
 				let timeUsed = performance.now() - now;
-				this._previousState.updateDuration = timeUsed;
-				this._previousState.finishedAt = performance.now();
+				console.log(`EF: update took ${~~timeUsed}ms`);
+				this._previousState.updateDuration = 99_999;
+				this._previousState.finishedAt = performance.now() + 99_999;
+				requestAnimationFrame(() => {
+					let dt = this._previousState.updateDuration = performance.now() - now;
+					this._previousState.finishedAt = performance.now();
+				});
 			}
 
 			offIncompatible(incompatible: string[]) {
@@ -350,7 +411,7 @@ namespace PoopJs {
 			}
 
 			clear() {
-				this.entryDatas = new Map();
+				this.entryDatas = new MapType();
 				this.parsers.splice(0, 999);
 				this.filters.splice(0, 999).map(e => e.remove());
 				this.sorters.splice(0, 999).map(e => e.remove());

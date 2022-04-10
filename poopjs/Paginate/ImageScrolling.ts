@@ -115,5 +115,20 @@ namespace PoopJs {
 
 			return scrollToImage(central);
 		}
+
+		export function saveScrollPosition() {
+			let img = getCentralImg();
+			let rect = img.getBoundingClientRect();
+			let centerToWindowCenter = (rect.top + rect.bottom) / 2 - innerHeight / 2;
+			let offset = centerToWindowCenter / rect.height;
+			return { img, offset, load() { loadScrollPosition({ img, offset }); } };
+		}
+		export function loadScrollPosition(pos: { img: HTMLImageElement, offset: number }) {
+			let rect = pos.img.getBoundingClientRect();
+			let centerToWindowCenter = pos.offset * rect.height;
+			let actualCenterToWindowCenter = (rect.top + rect.bottom) / 2 - innerHeight / 2;
+			scrollBy(0, actualCenterToWindowCenter - centerToWindowCenter);
+		}
+
 	}
 }

@@ -1,29 +1,33 @@
 declare namespace PoopJs {
+    interface Deferred<T = void> extends Promise<T> {
+        resolve(value: T | PromiseLike<T>): void;
+        reject: (reason?: any) => void;
+        r(value: any): any;
+        r(value: T | PromiseLike<T>): void;
+        j: (reason?: any) => void;
+    }
     namespace PromiseExtension {
-        interface UnwrappedPromise<T> extends Promise<T> {
-            resolve: (value: T | PromiseLike<T>) => void;
-            reject: (reason?: any) => void;
-            r: (value: T | PromiseLike<T>) => void;
-            j: (reason?: any) => void;
-        }
         /**
          * Creates unwrapped promise
          */
-        function empty<T>(): UnwrappedPromise<T>;
+        function empty<T = void>(): Deferred<T>;
         function frame(n?: number): Promise<number>;
     }
 }
 declare namespace PoopJs {
     namespace ArrayExtension {
-        export function pmap<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => Promise<V> | V, threads?: number): Promise<V[]>;
-        export function map<T = number>(this: ArrayConstructor, length: number, mapper?: (number: any) => T): T[];
-        export function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter?: ((a: number, b: number, ae: T, be: T) => number) | -1): T[];
-        export function vsort<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => V, sorter: ((a: V, b: V, ae: T, be: T) => number) | -1): T[];
-        export interface PMapData<T, V, E = never> extends PromiseLike<(V | E)[]> {
+        function pmap<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => Promise<V> | V, threads?: number): Promise<V[]>;
+        function map<T = number>(this: ArrayConstructor, length: number, mapper?: (number: any) => T): T[];
+        function vsort<T>(this: T[], mapper: (e: T, i: number, a: T[]) => number, sorter?: ((a: number, b: number, ae: T, be: T) => number) | -1): T[];
+        function vsort<T, V>(this: T[], mapper: (e: T, i: number, a: T[]) => V, sorter: ((a: V, b: V, ae: T, be: T) => number) | -1): T[];
+        function at<T>(this: T[], index: number): T;
+        function findLast<T, S extends T>(this: T[], predicate: (this: void, value: T, index: number, obj: T[]) => value is S, thisArg?: any): S | undefined;
+        function findLast<T>(predicate: (this: T[], value: T, index: number, obj: T[]) => unknown, thisArg?: any): T | undefined;
+        class PMap<T, V, E = never> {
             /** Original array */
             source: T[];
             /** Async element converter function */
-            mapper: (e: T, i: number, a: T[], data: PMapData<T, V, E>) => Promise<V | E>;
+            mapper: (e: T, i: number, a: T[], pmap: PMap<T, V, E>) => Promise<V | E>;
             /** Max number of requests at once.
              *  *May* be changed in runtime */
             threads: number;
@@ -31,11 +35,25 @@ declare namespace PoopJs {
              *  *May* be changed in runtime */
             window: number;
             /** Unfinished result array */
-            result: (V | Error | undefined)[];
+            results: (V | E | undefined)[];
             /** Promises for every element */
-            requests: UnwrappedPromise<V | E>[];
-            beforeStart(e: T, i: number, a: T[], data: PMapData<T, V, E>): void;
-            afterComplete(e: T, i: number, a: T[], data: PMapData<T, V, E>): void;
+            requests: Deferred<V | E>[];
+            beforeStart: (data: {
+                e: T;
+                i: number;
+                a: T[];
+                v?: V | E;
+                r: (V | E)[];
+                pmap: PMap<T, V, E>;
+            }) => Promise<void> | void;
+            afterComplete: (data: {
+                e: T;
+                i: number;
+                a: T[];
+                v: V | E;
+                r: (V | E)[];
+                pmap: PMap<T, V, E>;
+            }) => Promise<void> | void;
             /** Length of the array */
             length: number;
             /** The number of elements finished converting */
@@ -44,25 +62,28 @@ declare namespace PoopJs {
              *  in the mapper function: including the current one */
             activeThreads: number;
             lastStarted: number;
+            allTasksDone: Deferred<(V | E)[]> & {
+                pmap: PMap<T, V, E>;
+            };
+            anyTaskResolved: Deferred<void>;
+            constructor(source: Partial<PMap<T, V, E>>);
+            startTask(arrayIndex: number): Promise<void>;
+            run_internal(): Promise<(V | E)[]>;
+            run(): Deferred<(V | E)[]> & {
+                pmap: PMap<T, V, E>;
+            };
+            pause(): void;
+            unpause(): void;
+            cancel(): void;
+            prepare(): this;
+            emptyResult<T = V | E>(): Deferred<T>;
+            static this_pmap<T, V, E = never>(this: T[], mapper: PMap<T, V, E>['mapper'], options?: Partial<PMap<T, V, E>> | number | true): Deferred<(V | E)[]> & {
+                pmap: PMap<T, V, E>;
+            };
+            static pmap<T, V, E = never>(array: T[], mapper: PMap<T, V, E>['mapper'], options?: Partial<PMap<T, V, E>> | number | true): Deferred<(V | E)[]> & {
+                pmap: PMap<T, V, E>;
+            };
         }
-        type UnwrappedPromise<T> = PromiseExtension.UnwrappedPromise<T>;
-        export interface PMapSource<T, V, E = never> extends PromiseLike<V[]> {
-            /** Original array */
-            source: T[];
-            /** Async element converter function */
-            mapper: (e: T, i: number, a: T[], data: PMapData<T, V, E>) => Promise<V | E>;
-            /** Array to write to */
-            result?: (V | Error | undefined)[];
-            /** Max number of requests at once.
-             *  Default: 5
-             *  *May* be changed in runtime */
-            threads: number;
-            /** Max distance between the olders incomplete and newest active elements.
-             *  Default: unlimited
-             *  *May* be changed in runtime */
-            window?: number;
-        }
-        export {};
     }
 }
 declare namespace PoopJs {
@@ -165,11 +186,7 @@ declare namespace PoopJs {
 declare namespace PoopJs {
     let debug: boolean;
     namespace etc {
-        function keybind(key: string, fn: (event: KeyboardEvent) => void): () => void;
         function fullscreen(on?: boolean): Promise<boolean>;
-        function anybind(keyOrEvent: string | number, fn: (event: Event) => void): void;
-        function fullscreenOn(key: string): () => void;
-        function fIsForFullscreen(): void;
         function hashCode(this: string): any;
         function hashCode(value: string): any;
         function init(): void;
@@ -186,15 +203,8 @@ declare namespace PoopJs {
         const kds: {
             [k: string]: string | ((e: KeyboardEvent & MouseEvent) => void);
         };
+        function generateKdsCodes(e: KeyboardEvent & MouseEvent): string[];
         function kdsListener(e: KeyboardEvent & MouseEvent): void;
-        let _kbdInited: boolean;
-        function makeKds(kds: {
-            [k: string]: string | ((e: KeyboardEvent & MouseEvent) => void);
-        }): {
-            [k: string]: string | ((e: KeyboardEvent & MouseEvent) => void);
-        } & {
-            [k: string]: string | ((e: KeyboardEvent & MouseEvent) => void);
-        };
     }
     let kds: typeof etc.kds;
 }
@@ -205,6 +215,9 @@ declare namespace PoopJs {
         type RequestInitEx = RequestInit & {
             maxAge?: deltaTime;
             xml?: boolean;
+            cacheUrl?: string | 'post' & {
+                _?: 'post';
+            };
         };
         type RequestInitExJson = RequestInit & {
             maxAge?: deltaTime;
@@ -257,9 +270,28 @@ declare namespace PoopJs {
             filters: IFilter<Data>[];
             sorters: ISorter<Data>[];
             modifiers: IModifier<Data>[];
+            get byName(): {
+                [x: string]: IFilter<Data>;
+            } & {
+                [x: string]: ISorter<Data>;
+            } & {
+                [x: string]: IModifier<Data>;
+            } & {
+                filters: {
+                    [x: string]: IFilter<Data>;
+                };
+                sorters: {
+                    [x: string]: ISorter<Data>;
+                };
+                modifiers: {
+                    [x: string]: IModifier<Data>;
+                };
+            };
             addFilter(id: string, filter: FilterFn<Data>, data?: FilterPartial<Data>): Filter<Data>;
+            addFilter(propName: string & keyof Data): Filter<Data>;
             addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V>, data: ValueFilterPartial<Data, V>): ValueFilter<Data, V>;
             addVFilter<V extends number | string>(id: string, filter: ValueFilterFn<Data, V>, data: V): any;
+            addVFilter<V extends number>(propName: string & keyof Data, defaultMin: V): any;
             addMFilter(id: string, value: (data: Data, el: HTMLElement) => string, data: MatchFilterSource<Data>): MatchFilter<Data>;
             addTagFilter(id: string, data: TagFilterSource<Data>): TagFilter<Data>;
             addSorter<V extends number | string>(id: string, sorter: SorterFn<Data, V>, data?: SorterPartialSource<Data, V>): Sorter<Data, V>;
@@ -278,6 +310,7 @@ declare namespace PoopJs {
             modifyEntries(): void;
             moveToTop(item: ISorter<Data> | IModifier<Data>): void;
             findEntries(): HTMLElement[];
+            _earliestUpdate: number;
             update(reparse?: boolean): void;
             offIncompatible(incompatible: string[]): void;
             style(s?: string): this;
@@ -406,6 +439,15 @@ declare namespace PoopJs {
         let scrollWholeImagePending: boolean;
         function getCentralImg(): HTMLImageElement;
         function scrollWholeImage(dir?: number): boolean;
+        function saveScrollPosition(): {
+            img: HTMLImageElement;
+            offset: number;
+            load(): void;
+        };
+        function loadScrollPosition(pos: {
+            img: HTMLImageElement;
+            offset: number;
+        }): void;
     }
 }
 declare namespace PoopJs {
@@ -503,6 +545,9 @@ interface ObjectConstructor {
     defineValue: typeof PoopJs.ObjectExtension.defineValue;
     defineGetter: typeof PoopJs.ObjectExtension.defineGetter;
     setPrototypeOf<T, P>(o: T, proto: P): T & P;
+    fromEntries<K extends string | number | symbol, V>(entries: readonly (readonly [K, V])[]): {
+        [k in K]: V;
+    };
 }
 interface PromiseConstructor {
     empty: typeof PoopJs.PromiseExtension.empty;
@@ -511,7 +556,7 @@ interface PromiseConstructor {
 }
 interface Array<T> {
     vsort: typeof PoopJs.ArrayExtension.vsort;
-    pmap: typeof PoopJs.ArrayExtension.pmap;
+    pmap: typeof PoopJs.ArrayExtension.PMap.this_pmap;
 }
 interface ArrayConstructor {
     map: typeof PoopJs.ArrayExtension.map;
@@ -525,6 +570,9 @@ interface Date {
 interface Performance {
     _now: Performance['now'];
 }
+interface Window {
+    _requestAnimationFrame: Window['requestAnimationFrame'];
+}
 interface Response {
     cachedAt: number;
 }
@@ -536,6 +584,12 @@ interface String {
 }
 interface Array<T> {
     pop(): this extends [T, ...T[]] ? T : T | undefined;
+    at(index: number): T;
+    findLast<S extends T>(predicate: (this: void, value: T, index: number, obj: T[]) => value is S, thisArg?: any): S | undefined;
+    findLast(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): T | undefined;
+}
+interface Math {
+    sign(x: number): -1 | 0 | 1;
 }
 declare namespace PoopJs {
     namespace EntryFiltererExtension {
@@ -748,4 +802,55 @@ declare namespace PoopJs {
         }
     }
     let EF: typeof EntryFiltererExtension.EntryFilterer;
+}
+declare namespace PoopJs {
+    class ScrollInfo {
+        el: HTMLElement;
+        /** absolute rect */
+        rect: DOMRect;
+        constructor(el: HTMLElement);
+        topOffset(scrollY?: number): number;
+        centerOffset(scrollY?: number): number;
+        bottomOffset(scrollY?: number): number;
+        distanceFromScreen(scrollY?: number): number;
+        get fullDir(): 1 | -1 | 0;
+        get _offsets(): number[];
+    }
+    class ImageScroller {
+        selector: string;
+        enabled: boolean;
+        disableWheel: boolean;
+        listener?: any;
+        stopPropagation: boolean;
+        constructor(selector?: string);
+        _wheelListener?: (event: WheelEvent) => void;
+        onWheelScrollFailed?: (event: WheelEvent) => void;
+        bindWheel(): void;
+        _arrowListener?: (event: KeyboardEvent) => void;
+        bindArrows(): void;
+        /** enable this scroller */
+        on(selector?: string): this;
+        /** disable this scroller */
+        off(selector?: string): this;
+        mode: 'single' | 'group';
+        /** scroll to the next item */
+        scroll(dir: -1 | 0 | 1): boolean;
+        scrollToNextCenter(dir: -1 | 0 | 1): boolean;
+        scrollToNextGroup(dir: -1 | 0 | 1): boolean;
+        _nextScrollTarget(dir: -1 | 0 | 1, mode: 'single'): ScrollInfo | undefined;
+        _nextScrollTarget(dir: -1 | 0 | 1, mode: 'group'): ScrollInfo[] | undefined;
+        getAllScrolls(selector?: string): ScrollInfo[];
+        /** used  */
+        keep(resizer: () => any | Promise<any>, raf?: boolean): Promise<void>;
+        /** save current item scroll position */
+        save(): {
+            info: ScrollInfo;
+            offset: number;
+            restore(): void;
+        };
+        static createDefault(): ImageScroller;
+    }
+    let is: ImageScroller;
+    const styleVars: Record<string, string>;
+    const styleVarsN: Record<string, number>;
 }

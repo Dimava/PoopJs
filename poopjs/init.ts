@@ -51,8 +51,12 @@ namespace PoopJs {
 		// ObjectExtension.defineValue(Object, 'map', ObjectExtension.map);
 
 		ObjectExtension.defineValue(window.Array, 'map', ArrayExtension.map);
-		ObjectExtension.defineValue(window.Array.prototype, 'pmap', ArrayExtension.pmap);
+		ObjectExtension.defineValue(window.Array.prototype, 'pmap', ArrayExtension.PMap.this_pmap);
 		ObjectExtension.defineValue(window.Array.prototype, 'vsort', ArrayExtension.vsort);
+		if (![].at)
+			ObjectExtension.defineValue(window.Array.prototype, 'at', ArrayExtension.at);
+		if (![].findLast)
+			ObjectExtension.defineValue(window.Array.prototype, 'findLast', ArrayExtension.findLast);
 
 		window.paginate = PoopJs.paginate as any;
 		window.imageScrolling = PoopJs.ImageScrollingExtension;
@@ -62,6 +66,7 @@ namespace PoopJs {
 	}
 
 	ObjectExtension.defineGetter(window, '__init__', () => __init__(window));
+	Object.assign(globalThis, { PoopJs });
 
 	if (window.localStorage.__init__) {
 		window.__init__;

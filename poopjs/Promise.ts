@@ -1,32 +1,32 @@
 namespace PoopJs {
 
+	export interface Deferred<T = void> extends Promise<T> {
+		resolve(value: T | PromiseLike<T>): void;
+		reject: (reason?: any) => void;
+
+		r(value)
+		r(value: T | PromiseLike<T>): void;
+		j: (reason?: any) => void;
+
+		// PromiseState: 'pending' | 'fulfilled' | 'rejected';
+		// PromiseResult?: T | Error;
+	}
+
 	export namespace PromiseExtension {
-		// type UnwrappedPromise<T> = Promise<T> & {
-		// 	resolve: (value: T | PromiseLike<T>) => void;
-		// 	reject: (reason?: any) => void;
-		// 	r: (value: T | PromiseLike<T>) => void;
-		// 	j: (reason?: any) => void;
-		// }
-		export interface UnwrappedPromise<T> extends Promise<T> {
-			resolve: (value: T | PromiseLike<T>) => void;
-			reject: (reason?: any) => void;
-			r: (value: T | PromiseLike<T>) => void;
-			j: (reason?: any) => void;
-		}
 
 		/**
 		 * Creates unwrapped promise
 		 */
-		export function empty<T>() {
+		export function empty<T = void>(): Deferred<T> {
 			let resolve: (value: T) => void;
 			let reject: (reason?: any) => void;
-			let p = new Promise<T>((r, j) => {
+			return Object.assign(new Promise<T>((r, j) => {
 				resolve = r;
 				reject = j;
-			}) as UnwrappedPromise<T>;
-			p.resolve = p.r = resolve;
-			p.reject = p.j = reject;
-			return p;
+			}), {
+				resolve, reject,
+				r: resolve, j: reject,
+			});
 		}
 
 		export async function frame(n = 1): Promise<number> {
